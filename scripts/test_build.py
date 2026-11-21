@@ -1,8 +1,10 @@
 import json
+from html import unescape
 from pathlib import Path
 import re
 from tempfile import TemporaryDirectory
 import unittest
+from urllib.parse import parse_qs, quote, urljoin, urlsplit
 
 from build import build, ROOT, SITE_FILES
 
@@ -32,6 +34,8 @@ class PublicationTests(unittest.TestCase):
         page = (self.out / 'index.html').read_text()
         self.assertIn('>0件</p>', page)
         self.assertNotIn('data-empty-state hidden', page)
+        header = page.split('</header>', 1)[0]
+        self.assertIn('href="./manage.html">掲載・編集</a>', header)
 
     def test_catalog_is_rendered_before_scripts_run_and_matches_editor(self):
         filename = 'articles/Gormley2026_象牙質知覚過敏_統合解説.html'
@@ -103,7 +107,7 @@ class PublicationTests(unittest.TestCase):
         self.assertIn('href="../../index.html#catalog"', served)
         self.assertIn('name="viewport" content="width=device-width', served)
         self.assertIn(':where(img,svg){max-width:100%}', served)
-        original_markup = re.sub(r'<a data-study-home[^>]+>.*?</a>|<style data-study-fit>.*?</style>|<meta data-study-viewport[^>]*>', '', served)
+        original_markup = re.sub(r'<nav data-study-reader-nav\b[^>]*>.*?</nav>|<style data-study-fit>.*?</style>|<meta data-study-viewport[^>]*>', '', served, flags=re.S)
         self.assertEqual(original_markup, source)
         self.assertEqual((self.out / 'articles/智歯 1/画像 1.png').read_bytes(), b'figure bytes')
         self.add(name, '<h1>第2版</h1>')
@@ -131,6 +135,36 @@ class PublicationTests(unittest.TestCase):
         self.add('articles/paper.htm', '<base href="https://media.example.org/"><body><img src="figure.jpg">')
         build(self.root, self.out)
         self.assertIn('https://mxe050.github.io/y-sensei-study-library/#catalog', (self.out / 'articles/paper.htm').read_text())
+
+    def test_edit_links_select_the_same_article_from_shelf_and_reader(self):
+        shelf = 'https://mxe050.github.io/y-sensei-study-library/'
+        name = 'articles/象牙 & +#?%2F/index.html'
+        body = '<h1>解説</h1><p>本文</p>'
+        for case, source, base in [
+            ('fragment', body, urljoin(shelf, quote(name))),
+            ('remote-base', '<html><head><base href="https://media.example.org/"></head>'
+             '<body>' + body + '</body></html>', 'https://media.example.org/'),
+        ]:
+            with self.subTest(case=case):
+                self.add(name, source)
+                destination = self.out / case
+                build(self.root, destination)
+                index = (destination / 'index.html').read_text()
+                reader = (destination / name).read_text()
+                row = index.split('<li data-article-id=', 1)[1].split('</ul>', 1)[0]
+                main_end = row.index('</a>')
+                edit = re.search(r'<a\b(?=[^>]*\barticle-edit\b)[^>]*>(.*?)</a>', row, re.S)
+                self.assertIsNotNone(edit)
+                self.assertGreater(edit.start(), main_end)
+                reader_edit = re.search(r'<a\b(?=[^>]*\bdata-study-edit\b)[^>]*>(.*?)</a>', reader, re.S)
+                self.assertIsNotNone(reader_edit)
+                self.assertLess(reader_edit.end(), reader.index(body))
+                for link, document_base in [(edit, shelf), (reader_edit, base)]:
+                    self.assertIn('分類・タグを編集', link[1])
+                    href = unescape(re.search(r'href="([^"]+)"', link[0])[1])
+                    target = urlsplit(urljoin(document_base, href))
+                    self.assertEqual(target.scheme + '://' + target.netloc + target.path, shelf + 'manage.html')
+                    self.assertEqual(parse_qs(target.query).get('article'), [name])
 
 
 if __name__ == '__main__':

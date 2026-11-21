@@ -35,9 +35,16 @@ class ArticleParser(HTMLParser):
         self.images = []
         self.open_positions = {}
         self.doctype_end = None
+        self.first_content = None
+        self.head_containers = []
 
     def handle_starttag(self, tag, attrs):
         values = dict(attrs)
+        if self.first_content is None:
+            if tag in {'head', 'title', 'style', 'script', 'template', 'noscript'}:
+                self.head_containers.append(tag)
+            elif not self.head_containers and tag not in {'html', 'meta', 'base', 'link'}:
+                self.first_content = self.getpos()
         if tag in {'head', 'html', 'body'} and tag not in self.open_positions:
             row, column = self.getpos()
             self.open_positions[tag] = (row, column + len(self.get_starttag_text()))
@@ -59,10 +66,14 @@ class ArticleParser(HTMLParser):
             self.doctype_end = (row, column + len(decl) + 3)
 
     def handle_data(self, data):
+        if self.first_content is None and not self.head_containers and data.lstrip('\ufeff').strip():
+            self.first_content = self.getpos()
         if self.capture:
             self.parts[self.capture].append(data)
 
     def handle_endtag(self, tag):
+        if self.head_containers and tag == self.head_containers[-1]:
+            self.head_containers.pop()
         if tag == self.capture:
             self.finished.add(tag)
             self.capture = ''
@@ -126,21 +137,31 @@ def validate_images(parser, relative, present):
         raise ValueError(f'{relative}: 画像の参照先を確認してください。{names}')
 
 
+def edit_link(article_id):
+    return 'manage.html?article=' + quote(article_id, safe='')
+
+
 def reader_html(source, parser, relative):
     # A document with a <base> can redirect even root-relative links. Use the
     # canonical project URL in that case so the link really leads to the shelf.
     if parser.base:
-        home = PAGES_ORIGIN + PROJECT_BASE + '#catalog'
+        root = PAGES_ORIGIN + PROJECT_BASE
+        home = root + '#catalog'
     else:
-        home = '../' * (len(relative.parts) - 1) + 'index.html#catalog'
-    link = (f'<a data-study-home href="{home}" target="_self" lang="ja" '
-            'style="display:inline-block;margin:6px 10px;padding:7px 12px;'
-            'background:#f2f4ed;color:#244d43;border:1px solid #b5c8ba;'
-            'border-radius:4px;font:500 14px/1.5 system-ui;text-decoration:underline;">'
-            '← Y先生文献の書斎へ</a>')
+        root = '../' * (len(relative.parts) - 1)
+        home = root + 'index.html#catalog'
+    edit = root + edit_link(relative.as_posix())
+    nav = ('<nav data-study-reader-nav aria-label="文献の書斎" lang="ja">'
+           f'<a data-study-home href="{home}" target="_self">← Y先生文献の書斎へ</a>'
+           f'<a data-study-edit href="{edit}" target="_self">分類・タグを編集</a></nav>')
     added_head = ('<style data-study-fit>@media(max-width:760px){'
                   ':where(img,svg){max-width:100%}:where(img){height:auto}}'
-                  '</style>')
+                  'nav[data-study-reader-nav]{position:static;display:flex;flex-wrap:wrap;align-items:center;'
+                  'gap:6px;padding:6px 10px;background:#faf8f2;color:#244d43}'
+                  'nav[data-study-reader-nav] a{box-sizing:border-box;display:inline-flex;align-items:center;'
+                  'min-height:44px;padding:6px 12px;background:#f2f4ed;color:#244d43;border:1px solid #9dad9f;'
+                  'border-radius:4px;font:600 14px/1.5 system-ui;text-decoration:underline}'
+                  '@media print{nav[data-study-reader-nav]{display:none}}</style>')
     if 'viewport' not in parser.meta:
         added_head = ('<meta data-study-viewport name="viewport" '
                       'content="width=device-width, initial-scale=1">') + added_head
@@ -157,8 +178,8 @@ def reader_html(source, parser, relative):
     positions = parser.open_positions
     head_position = positions.get('head') or positions.get('html') or parser.doctype_end
     head_at = offset(head_position, int(source.startswith('\ufeff')))
-    body_at = offset(positions.get('body'), len(source))
-    for at, text in sorted([(head_at, added_head), (body_at, link)], key=lambda pair: pair[0], reverse=True):
+    body_at = max(head_at, offset(positions.get('body') or parser.first_content, len(source)))
+    for at, text in sorted([(body_at, nav), (head_at, added_head)], key=lambda pair: pair[0], reverse=True):
         source = source[:at] + text + source[at:]
     return source
 
@@ -192,7 +213,9 @@ def article_row(entry):
     return (f'<li data-article-id="{escape(entry["id"])}"><a class="article-link" href="{escape(entry["path"])}">'
             f'<div class="article-meta"><span class="article-category">{escape(entry["category"])}</span>'
             f'<time datetime="{entry["updated"]}">{date_text}</time></div>'
-            f'<h3>{escape(entry["title"])}</h3>{summary}{tags}</a></li>')
+            f'<h3>{escape(entry["title"])}</h3>{summary}{tags}</a>'
+            f'<a class="article-edit" href="{edit_link(entry["id"])}" '
+            f'aria-label="分類・タグを編集（{escape(entry["title"])}）">分類・タグを編集</a></li>')
 
 
 def write_catalog(root, output, entries):
