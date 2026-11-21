@@ -2,6 +2,8 @@
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
+from html import escape
 from html.parser import HTMLParser
 import json
 import re
@@ -68,6 +70,26 @@ class ArticleParser(HTMLParser):
 
 def display_text(value):
     return ' '.join(value.split())
+
+
+def classification(article, meta):
+    category = meta.get('study-category', '')
+    tags = re.split(r'[,，、;；\r\n]', meta.get('study-tags', meta.get('keywords', '')))
+    sidecar = article.with_name(article.name + '.meta.json')
+    has_metadata = sidecar.is_file()
+    if has_metadata:
+        try:
+            metadata = json.loads(sidecar.read_text(encoding='utf-8-sig'))
+        except (ValueError, UnicodeError) as error:
+            raise ValueError(f'{sidecar.name}: 分類・タグのJSONを読み込めません。{error}') from error
+        if not isinstance(metadata, dict):
+            raise ValueError(f'{sidecar.name}: 分類・タグにはJSONオブジェクトを指定してください。')
+        category = metadata.get('category', category)
+        tags = metadata.get('tags', tags)
+        if not isinstance(category, str) or not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
+            raise ValueError(f'{sidecar.name}: category は文字列、tags は文字列の配列で指定してください。')
+    cleaned_tags = dict.fromkeys(display_text(tag) for tag in tags if tag.strip())
+    return {'category': display_text(category) or '未分類', 'tags': list(cleaned_tags), 'hasMetadata': has_metadata}
 
 
 def is_entry(relative):
@@ -154,9 +176,63 @@ def publish_article(root, article, present, destination):
     summary = display_text(parser.meta.get('description') or parser.meta.get('og:description', ''))
     return {
         'id': relative.as_posix(), 'path': quote(relative.as_posix()), 'title': title,
-        'category': display_text(parser.meta.get('study-category', '')) or '未分類',
+        **classification(article, parser.meta),
         'summary': summary, 'updated': update_date(root, article),
     }
+
+
+def article_row(entry):
+    year, month, day = entry['updated'].split('-')
+    date_text = f'{year}年{int(month)}月{int(day)}日 更新'
+    summary = f'<p>{escape(entry["summary"])}</p>' if entry['summary'] else ''
+    tags = ''
+    if entry['tags']:
+        labels = ''.join(f'<li>{escape(tag)}</li>' for tag in entry['tags'])
+        tags = f'<ul class="article-tags" aria-label="タグ">{labels}</ul>'
+    return (f'<li data-article-id="{escape(entry["id"])}"><a class="article-link" href="{escape(entry["path"])}">'
+            f'<div class="article-meta"><span class="article-category">{escape(entry["category"])}</span>'
+            f'<time datetime="{entry["updated"]}">{date_text}</time></div>'
+            f'<h3>{escape(entry["title"])}</h3>{summary}{tags}</a></li>')
+
+
+def write_catalog(root, output, entries):
+    data = json.dumps(entries, ensure_ascii=False, separators=(',', ':'))
+    data = data.replace('<', r'\u003c').replace('\u2028', r'\u2028').replace('\u2029', r'\u2029')
+    # Keep already-cached pages from the first edition working.
+    (output / 'assets/catalog-data.js').write_text('window.STUDY_CATALOG = ' + data + ';\n', encoding='utf-8')
+    marker = '<script type="application/json" id="catalog-data">[]</script>'
+    common = {marker: marker.replace('>[]<', '>' + data + '<')}
+    # Version the script and stylesheet URLs when their contents change.
+    # Catalog records are embedded in the document itself.
+    versions = {}
+    for name in SITE_FILES:
+        if name.startswith('assets/'):
+            versions[name] = hashlib.sha256((root / name).read_bytes()).hexdigest()[:12]
+    asset_link = re.compile(r'((?:src|href)="(?:\./)?)(assets/[\w.-]+)(")')
+    for page in ('index.html', 'manage.html'):
+        template = (root / page).read_text(encoding='utf-8')
+        template = asset_link.sub(lambda match: (match[1] + match[2] + '?v=' + versions[match[2]] + match[3])
+                                  if match[2] in versions else match[0], template)
+        replacements = common.copy()
+        if page == 'index.html':
+            replacements.update({
+                '<!--catalog-count-->': f'{len(entries)}件',
+                '<!--catalog-rows-->': '\n'.join(article_row(entry) for entry in entries),
+                'data-empty-state hidden': 'data-empty-state hidden' if entries else 'data-empty-state',
+            })
+        for token in replacements:
+            if template.count(token) != 1:
+                raise ValueError(f'{page}: 目録のテンプレートに必要な項目を確認してください。{token}')
+        pattern = re.compile('|'.join(map(re.escape, replacements)))
+        rendered = pattern.sub(lambda match: replacements[match[0]], template)
+        if page == 'index.html':
+            version_marker = '<!--catalog-version-->'
+            if rendered.count(version_marker) != 1:
+                raise ValueError(f'{page}: 目録の版を示す項目がありません。')
+            version = hashlib.sha256(rendered.encode('utf-8')).hexdigest()[:20]
+            rendered = rendered.replace(version_marker, version)
+            (output / 'catalog-version.json').write_text(json.dumps({'version': version}), encoding='utf-8')
+        (output / page).write_text(rendered, encoding='utf-8')
 
 
 def build(root, output):
@@ -184,9 +260,7 @@ def build(root, output):
             shutil.copyfile(path, dest)
     entries.sort(key=lambda entry: (entry['title'], entry['id']))
     entries.sort(key=lambda entry: entry['updated'], reverse=True)
-    encoded = json.dumps(entries, ensure_ascii=False, indent=2)
-    escaped = encoded.replace('<', r'\u003c').replace('\u2028', r'\u2028').replace('\u2029', r'\u2029')
-    (output / 'assets/catalog-data.js').write_text('window.STUDY_CATALOG = ' + escaped + ';\n', encoding='utf-8')
+    write_catalog(root, output, entries)
     (output / '.nojekyll').touch()
     return entries
 

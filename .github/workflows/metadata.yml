@@ -1,0 +1,64 @@
+name: Save article classification
+
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions: {}
+
+jobs:
+  save:
+    if: >-
+      github.repository == 'mxe050/y-sensei-study-library' &&
+      github.event.issue.user.login == 'mxe050' &&
+      github.event.sender.login == 'mxe050' &&
+      github.event.issue.title == '[書斎] 分類・タグを保存'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      reason: ${{ steps.apply.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Save classification
+        id: apply
+        run: python3 scripts/save_metadata.py
+
+  publish:
+    needs: save
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+  inform:
+    needs: [save, publish]
+    if: ${{ always() && !cancelled() && needs.save.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Record the result on the request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ needs.publish.result }}
+          REASON: ${{ needs.save.outputs.reason }}
+          SAVE_RESULT: ${{ needs.save.result }}
+        run: |
+          if [ "$RESULT" = success ]; then
+            gh issue close "$ISSUE" --comment "分類とタグの公開が完了しました。[文献一覧を開く](https://mxe050.github.io/y-sensei-study-library/?latest=${GITHUB_RUN_ID}#catalog)"
+          else
+            if [ -n "$REASON" ]; then
+              message="$REASON"
+            elif [ "$SAVE_RESULT" = success ]; then
+              message="分類とタグは保存済みです。公開処理の記録を確認してください。"
+            else
+              message="保存を完了できませんでした。処理の記録を確認してください。"
+            fi
+            gh issue comment "$ISSUE" --body "$message https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID"
+          fi

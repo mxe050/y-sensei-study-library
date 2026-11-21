@@ -1,122 +1,156 @@
 'use strict';
 
 (() => {
-  const tools = document.getElementById('search-tools');
-  const query = document.getElementById('query');
-  const category = document.getElementById('category');
-  const list = document.getElementById('articles');
-  const total = document.getElementById('total');
-  const announcement = document.getElementById('announcement');
-  const empty = document.getElementById('empty');
-  const emptyTitle = document.getElementById('empty-title');
-  const emptyText = document.getElementById('empty-text');
-  const reset = document.getElementById('reset');
+  const byId = id => document.getElementById(id);
+  const tools = byId('search-tools');
+  const query = byId('query');
+  const category = byId('category');
+  const tag = byId('tag');
+  const total = byId('total');
+  const empty = byId('empty');
+  const reset = byId('reset');
+  const refresh = byId('refresh-catalog');
 
-  function textElement(tag, text, className) {
-    const element = document.createElement(tag);
-    element.textContent = text;
-    if (className) element.className = className;
-    return element;
+  function latestUrl() {
+    const url = new URL(location.href);
+    url.searchParams.set('latest', String(Date.now()));
+    url.hash = 'catalog';
+    return url.href;
   }
-
-  function showEmpty(title, description, canReset = false) {
-    emptyTitle.textContent = title;
-    emptyText.textContent = description;
-    reset.hidden = !canReset;
-    empty.hidden = false;
-  }
-
-  if (!Array.isArray(window.STUDY_CATALOG)) {
-    showEmpty('文献一覧を読み込めませんでした', '通信状況を確認して、このページを再度開いてください。');
+  // A browser can receive the new script while still displaying a first-edition shell.
+  if (!refresh) {
+    const link = document.createElement('a');
+    link.textContent = '最新版の文献一覧を開く';
+    link.href = latestUrl();
+    total.after(link);
+    if (!new URL(location.href).searchParams.has('latest')) location.replace(link.href);
     return;
   }
+  function refreshLink() {
+    refresh.href = latestUrl();
+  }
+  refreshLink();
+  refresh.addEventListener('click', refreshLink);
 
-  function normalizeText(text) {
+  // Check the edition on return, including an empty shelf left open during upload.
+  const edition = document.querySelector('meta[name="catalog-version"]')?.content;
+  if (/^[0-9a-f]+$/.test(edition || '') && /^https?:$/.test(location.protocol)) {
+    let lastCheck = 0;
+    let pending = false;
+    let found = false;
+    async function checkEdition() {
+      const now = Date.now();
+      if (document.hidden || pending || found || now - lastCheck < 3000) return;
+      pending = true;
+      lastCheck = now;
+      try {
+        const response = await fetch(`./catalog-version.json?v=${now}`, {cache: 'no-store'});
+        if (!response.ok) return;
+        const latest = (await response.json()).version;
+        if (typeof latest === 'string' && /^[0-9a-f]+$/.test(latest) && latest !== edition) {
+          found = true;
+          refresh.textContent = '新しい文献一覧を表示';
+          refresh.classList.add('update-available');
+          byId('catalog-freshness').textContent = '新しい文献一覧が公開されました。';
+        }
+      } catch {
+        // A saved page or a temporary offline connection can still use its complete catalog.
+      } finally {
+        pending = false;
+      }
+    }
+    window.addEventListener('pageshow', checkEdition);
+    document.addEventListener('visibilitychange', checkEdition);
+    // A publication may finish while the reader is already back on this tab.
+    window.setInterval(checkEdition, 60000);
+  }
+
+  // Keep the published HTML readable even if interactive filtering cannot start.
+  let catalog;
+  try {
+    catalog = JSON.parse(byId('catalog-data').textContent);
+  } catch {
+    return;
+  }
+  const rows = [...byId('articles').children];
+  if (!Array.isArray(catalog) || !catalog.length || rows.length !== catalog.length) return;
+
+  function normalize(text) {
     return String(text || '').normalize('NFKC').toLocaleLowerCase('ja');
   }
 
-  function prepareArticle(row) {
-    if (!row || !row.title || typeof row.path !== 'string') return null;
-    const base = new URL('./articles/', location.href);
-    let url;
-    try { url = new URL(row.path, location.href); } catch { return null; }
-    if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname) || !/\.html?$/i.test(url.pathname)) return null;
-    return {
-      ...row,
-      href: url.href,
-      category: row.category || '',
-      searchableText: normalizeText([row.title, row.category, row.summary].join(' ')),
-    };
+  const entries = new Map(catalog.map(article => [article.id, article]));
+  const records = [];
+  for (const row of rows) {
+    const article = entries.get(row.dataset.articleId);
+    if (!article || !Array.isArray(article.tags)) return;
+    records.push({
+      row, category: article.category, tags: article.tags,
+      text: normalize([article.title, article.summary, article.category, ...article.tags].join(' ')),
+    });
   }
 
-  const records = window.STUDY_CATALOG.map(prepareArticle).filter(Boolean);
-  records.sort((a, b) => String(b.updated || '').localeCompare(String(a.updated || '')) || a.title.localeCompare(b.title, 'ja'));
-  const categories = [...new Set(records.map(article => article.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ja'));
-  for (const name of categories) category.add(new Option(name, name));
-  tools.hidden = records.length === 0;
+  function addOptions(field, values) {
+    const sorted = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ja'));
+    for (const value of sorted) field.add(new Option(value, value));
+  }
+  addOptions(category, records.map(record => record.category));
+  addOptions(tag, records.flatMap(record => record.tags));
+  tools.hidden = false;
 
-  function articleRow(article) {
-    const li = document.createElement('li');
-    const link = document.createElement('a');
-    link.className = 'article-link';
-    link.href = article.href;
-    const meta = document.createElement('div');
-    meta.className = 'article-meta';
-    if (article.category) meta.append(textElement('span', article.category, 'article-category'));
-    if (article.updated && /^\d{4}-\d\d-\d\d$/.test(article.updated)) {
-      const [year, month, day] = article.updated.split('-');
-      const time = textElement('time', `${year}年${Number(month)}月${Number(day)}日 更新`);
-      time.dateTime = article.updated;
-      meta.append(time);
+  function filterList() {
+    const words = normalize(query.value).trim().split(/\s+/).filter(Boolean);
+    let count = 0;
+    for (const record of records) {
+      const matches = (!category.value || record.category === category.value)
+        && (!tag.value || record.tags.includes(tag.value))
+        && words.every(word => record.text.includes(word));
+      record.row.hidden = !matches;
+      if (matches) count++;
     }
-    if (meta.childElementCount) link.append(meta);
-    link.append(textElement('h3', article.title));
-    if (article.summary) link.append(textElement('p', article.summary));
-    li.append(link);
-    return li;
-  }
-
-  function render() {
-    const words = normalizeText(query.value).trim().split(/\s+/).filter(Boolean);
-    const filtered = Boolean(words.length || category.value);
-    const matches = records.filter(article => (!category.value || article.category === category.value) && words.every(word => article.searchableText.includes(word)));
-    list.replaceChildren(...matches.map(articleRow));
-    total.textContent = filtered ? `${records.length}件中 ${matches.length}件` : `${records.length}件`;
-    announcement.textContent = `掲載文献 ${total.textContent}`;
-    empty.hidden = true;
-    if (!records.length) showEmpty('公開された文献はまだありません', '掲載された論文の批判的吟味は、ここからお読みいただけます。');
-    else if (!matches.length) showEmpty('該当する文献がありません', 'キーワードや分野を変えてお試しください。', true);
+    const active = Boolean(category.value || tag.value || words.length);
+    total.textContent = active ? `${records.length}件中 ${count}件` : `${records.length}件`;
+    byId('announcement').textContent = `掲載文献 ${total.textContent}`;
+    empty.hidden = count > 0;
+    if (!count) {
+      byId('empty-title').textContent = '該当する文献がありません';
+      byId('empty-text').textContent = 'キーワード、分類、タグを変えてお試しください。';
+      reset.hidden = false;
+    }
   }
 
   function restoreFilters() {
     const params = new URLSearchParams(location.search);
     query.value = params.get('q') || '';
-    category.value = categories.includes(params.get('category')) ? params.get('category') : '';
-    render();
+    for (const field of [category, tag]) {
+      const requested = params.get(field.name);
+      field.value = [...field.options].some(option => option.value === requested) ? requested : '';
+    }
+    filterList();
+    refreshLink();
   }
 
   function updateFilters() {
     const url = new URL(location.href);
-    for (const field of [query, category]) {
+    for (const field of [query, category, tag]) {
       if (field.value) url.searchParams.set(field.name, field.value);
       else url.searchParams.delete(field.name);
     }
-    // The filtered list can be bookmarked and remains in the reader's back history.
     if (url.href !== location.href) {
-      try { history.replaceState(history.state, '', url); } catch { /* Filtering also works in local previews. */ }
+      try { history.replaceState(history.state, '', url); } catch { /* Local file previews may restrict history. */ }
     }
-    render();
+    filterList();
+    refreshLink();
   }
-
   tools.addEventListener('submit', event => {
     event.preventDefault();
     updateFilters();
   });
   query.addEventListener('input', updateFilters);
   category.addEventListener('change', updateFilters);
+  tag.addEventListener('change', updateFilters);
   reset.addEventListener('click', () => {
-    query.value = '';
-    category.value = '';
+    tools.reset();
     updateFilters();
     query.focus();
   });

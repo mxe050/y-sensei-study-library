@@ -6,36 +6,67 @@
   <meta name="robots" content="noindex,follow">
   <title>文献の掲載・差し替え｜Y先生文献の書斎</title>
   <link rel="stylesheet" href="assets/manage.css">
-  <script defer src="assets/catalog-data.js"></script>
+  <script type="application/json" id="catalog-data">[]</script>
   <script defer src="assets/manage.js"></script>
 </head>
 <body>
 <header><div class="bar"><a class="wordmark" href="./index.html">Y先生文献の書斎</a><a class="back" href="./index.html">書斎に戻る</a></div></header>
 <main>
   <h1>文献の掲載・差し替え</h1>
-  <p class="intro">公開用に整えたHTMLを確認し、GitHubに保存すると書斎に掲載されます。</p>
+  <p class="intro">公開用のHTMLを追加したり、掲載した文献に分類とタグを付けたりできます。</p>
+  <noscript><p>掲載先の選択と分類の入力には、ブラウザーのJavaScriptを有効にしてください。</p></noscript>
   <section aria-labelledby="where">
-    <h2 id="where">掲載先</h2>
-    <label for="target">新規掲載、または差し替える文献を選択</label>
+    <h2 id="where"><label for="target">掲載する文献</label></h2>
     <select id="target"><option value="">新しく文献を掲載する</option></select>
-    <p id="destination" class="destination" aria-live="polite">保存先　articles/</p>
-  </section>
-  <section aria-labelledby="preview-heading">
-    <h2 id="preview-heading">公開前に確認</h2>
-    <label for="html-file">公開するHTMLファイル</label>
+    <p id="destination" class="destination">保存先　articles/</p>
+    <label for="html-file" id="file-label">公開するHTMLファイル</label>
     <input id="html-file" type="file" accept=".html,.htm,text/html">
-    <p id="selection" role="status">選択したファイルは、この端末でプレビューできます。</p>
+    <p id="selection" role="status">ファイルを選ぶと、本文と画像をこの端末で確認できます。</p>
     <div id="inspection" hidden>
       <div id="images"></div>
       <details id="preview"><summary>本文と埋め込み画像を確認する</summary><p class="caption">外部ファイルの読み込みと資料内のスクリプトは、プレビューでは停止しています。</p><iframe id="document" sandbox="" referrerpolicy="no-referrer" title="公開候補HTMLのローカルプレビュー"></iframe></details>
     </div>
   </section>
+  <section aria-labelledby="classification-heading">
+    <h2 id="classification-heading">分類・タグ</h2>
+    <div class="field">
+      <label for="category">分類</label>
+      <input id="category" type="text" maxlength="100" list="category-options" placeholder="例：歯科保存学" autocomplete="off">
+      <datalist id="category-options"></datalist>
+    </div>
+    <div class="field">
+      <label for="tags">タグ</label>
+      <input id="tags" type="text" placeholder="例：象牙質知覚過敏、ネットワークメタ解析" aria-describedby="tags-hint" autocomplete="off">
+      <p class="caption" id="tags-hint">複数のタグは読点（、）かカンマで区切ってください。</p>
+    </div>
+  </section>
   <section class="publish" aria-labelledby="publish-heading">
-    <h2 id="publish-heading">GitHubに保存</h2>
-    <p id="upload-instruction">次の画面で公開するHTMLをもう一度選びます。別ファイルの画像は、HTMLから参照しているフォルダ構成のまま一緒に追加してください。</p>
-    <p><span lang="en">Commit changes</span> で保存すると、公開サイトの更新が始まります。</p>
-    <a id="upload" class="primary" href="https://github.com/mxe050/y-sensei-study-library/upload/main/articles" target="_blank" rel="noopener noreferrer">GitHubのアップロード画面を開く ↗</a>
-    <p class="caption">書き込み権限のあるGitHubアカウントで操作してください。</p>
+    <h2 id="publish-heading">GitHubに保存する</h2>
+    <p id="upload-instruction" aria-live="polite">公開するHTMLを選んでください。</p>
+    <div id="issue-actions" hidden>
+      <a id="issue-save" class="primary" target="_blank" rel="noopener noreferrer">GitHubで分類・タグを保存 ↗</a>
+      <p class="caption">書斎の所有者としてGitHubにログインし、次の画面で <span lang="en">Create</span> を押してください。公開の更新依頼が作られ、処理結果はその依頼に届きます。</p>
+    </div>
+    <div id="standard-actions">
+      <div id="file-actions">
+        <p id="file-instruction"></p>
+        <div class="actions">
+          <button id="download-meta" type="button" hidden>分類ファイルをダウンロード</button>
+          <a id="upload" class="primary" href="https://github.com/mxe050/y-sensei-study-library/upload/main/articles" target="_blank" rel="noopener noreferrer">GitHubのアップロード画面を開く ↗</a>
+        </div>
+        <p id="save-status" class="save-status" role="status"></p>
+        <p class="caption">GitHubで <span lang="en">Commit changes</span> を押すと保存されます。書き込み権限のあるアカウントで操作してください。</p>
+      </div>
+    </div>
+    <details id="fallback" hidden>
+      <summary>分類ファイルをアップロードして保存する方法</summary>
+      <div id="fallback-body"></div>
+    </details>
+  </section>
+  <section class="result" aria-labelledby="progress-heading">
+    <h2 id="progress-heading">保存した文献の公開状況</h2>
+    <p>GitHubの公開履歴で最新の実行が <span lang="en">Success</span> になったら、最新の文献一覧を開いてください。</p>
+    <div class="links"><a href="https://github.com/mxe050/y-sensei-study-library/actions/workflows/pages.yml" target="_blank" rel="noopener noreferrer">GitHubで公開履歴を見る ↗</a><a id="latest" href="./index.html#catalog">最新の文献一覧を開く</a><a id="latest-manage" href="./manage.html">掲載する文献の選択肢を更新</a></div>
   </section>
 </main>
 </body></html>

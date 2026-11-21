@@ -4,7 +4,7 @@ import re
 from tempfile import TemporaryDirectory
 import unittest
 
-from build import build, SITE_FILES
+from build import build, ROOT, SITE_FILES
 
 
 class PublicationTests(unittest.TestCase):
@@ -15,7 +15,7 @@ class PublicationTests(unittest.TestCase):
         self.out = Path(self.temp.name) / 'published'
         (self.root / 'articles').mkdir(parents=True)
         for name in SITE_FILES:
-            self.add(name, b'')
+            self.add(name, (ROOT / name).read_bytes())
 
     def add(self, name, data):
         path = self.root / name
@@ -29,6 +29,57 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(build(self.root, self.out), [])
         self.assertFalse((self.out / 'notes.json').exists())
         self.assertFalse((self.out / 'articles/.gitkeep').exists())
+        page = (self.out / 'index.html').read_text()
+        self.assertIn('>0件</p>', page)
+        self.assertNotIn('data-empty-state hidden', page)
+
+    def test_catalog_is_rendered_before_scripts_run_and_matches_editor(self):
+        filename = 'articles/Gormley2026_象牙質知覚過敏_統合解説.html'
+        self.add(filename, '<title>論文 &amp; &lt;要旨&gt;</title>'
+                 '<meta name="description" content="&lt;/script&gt;">'
+                 '<meta name="study-category" content="歯科">'
+                 '<meta name="study-tags" content="知覚過敏、NMA; 知覚過敏">')
+        entries = build(self.root, self.out)
+        index = (self.out / 'index.html').read_text()
+        version = json.loads((self.out / 'catalog-version.json').read_text())['version']
+        self.assertIn(f'<meta name="catalog-version" content="{version}">', index)
+        self.assertIn('>1件</p>', index)
+        self.assertIn('data-empty-state hidden', index)
+        self.assertIn(f'data-article-id="{filename}"', index)
+        self.assertIn(f'href="{entries[0]["path"]}"', index)
+        self.assertIn('<h3>論文 &amp; &lt;要旨&gt;</h3>', index)
+        self.assertIn('<li>知覚過敏</li><li>NMA</li>', index)
+        self.assertEqual(entries[0]['tags'], ['知覚過敏', 'NMA'])
+        for name in ('index.html', 'manage.html'):
+            page = (self.out / name).read_text()
+            payload = re.search(r'<script type="application/json" id="catalog-data">(.*?)</script>', page, re.S)
+            self.assertEqual(json.loads(payload[1]), entries)
+            self.assertNotIn('/catalog-data.js', page)
+            self.assertRegex(page, r'(?:catalog|manage)\.js\?v=[a-f0-9]{12}')
+
+    def test_sidecar_overrides_and_clears_fields_without_modifying_source(self):
+        original = '<h1>解説</h1><meta name="study-category" content="歯科"><meta name="keywords" content="A,B">'
+        name = 'articles/智歯/index.htm'
+        article = self.add(name, original)
+        def read_at(stage):
+            return build(self.root, self.out / stage)[0]
+        first = read_at('first')
+        self.assertEqual(first['tags'], ['A', 'B'])
+        self.assertFalse(first['hasMetadata'])
+        self.add(name + '.meta.json', '{"category":"  口腔外科 ","tags":["RCT"," A & B ","RCT"]}')
+        edited = read_at('edited')
+        self.assertTrue(edited['hasMetadata'])
+        self.assertEqual((edited['category'], edited['tags']), ('口腔外科', ['RCT', 'A & B']))
+        self.assertEqual(edited['path'], first['path'])
+        self.assertNotEqual((self.out / 'first/catalog-version.json').read_text(),
+                            (self.out / 'edited/catalog-version.json').read_text())
+        self.add(name + '.meta.json', '{"category":"","tags":[]}')
+        cleared = read_at('cleared')
+        self.assertEqual((cleared['category'], cleared['tags']), ('未分類', []))
+        self.add(name + '.meta.json', '{"tags":["Open access"]}')
+        partial = read_at('partial')
+        self.assertEqual((partial['category'], partial['tags']), ('歯科', ['Open access']))
+        self.assertEqual(article.read_text(), original)
 
     def test_images_and_article_bytes_preserved_with_return_navigation(self):
         name = 'articles/智歯 1/index.html'
