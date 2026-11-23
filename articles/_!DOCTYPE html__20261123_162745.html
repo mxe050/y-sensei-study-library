@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【一般歯科医師向け・やさしい図解＆マンガ版】2型糖尿病の患者さんに歯周炎があると、将来のHbA1cは悪くなるの？</title>
+  <style>
+    :root {
+      --bg: #fdfaf5;
+      --paper: #ffffff;
+      --ink: #2c3e50;
+      --muted: #607385;
+      --mint: #2a9d8f;
+      --mint-pale: #eaf7f5;
+      --mint-border: #b5e2dc;
+      --coral: #e06d53;
+      --coral-pale: #fff1ed;
+      --coral-border: #f7c5b9;
+      --sunny: #d98a2b;
+      --sunny-pale: #fff8eb;
+      --sunny-border: #f5dcb0;
+      --sky: #3d7ea6;
+      --sky-pale: #eef6fb;
+      --sky-border: #bfdcf0;
+      --lavender: #7b61a6;
+      --lavender-pale: #f5f1fb;
+      --line: #e6e1d6;
+      --shadow: 0 8px 24px rgba(44, 62, 80, 0.06);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 16.5px;
+      line-height: 1.9;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    /* Header */
+    header.hero {
+      background: linear-gradient(135deg, #dff5f2 0%, #eef7fb 55%, #fff5eb 100%);
+      border-bottom: 4px solid var(--mint-border);
+      padding: 44px 20px 36px;
+      text-align: center;
+    }
+    .pill-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .pill {
+      background: #ffffff;
+      color: var(--mint);
+      border: 1.5px solid var(--mint-border);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    header.hero h1 {
+      font-size: clamp(1.45rem, 3vw, 2.05rem);
+      color: #1d4e56;
+      line-height: 1.5;
+      margin: 0 auto 14px;
+      max-width: 840px;
+    }
+    header.hero p.lead {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 740px;
+      margin: 0 auto 20px;
+    }
+    .quick-nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .quick-nav a {
+      background: #ffffff;
+      color: #265c65;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: 1.5px solid #cde5e2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .quick-nav a:hover {
+      background: var(--mint);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    /* Section Cards */
+    section.card {
+      background: var(--paper);
+      border: 1.5px solid var(--line);
+      border-radius: 20px;
+      padding: 34px 36px;
+      margin: 28px 0;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 640px) {
+      section.card { padding: 24px 18px; border-radius: 16px; }
+    }
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2.5px dashed var(--line);
+    }
+    .sec-badge {
+      background: var(--mint);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 5px 13px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .sec-head h2 {
+      margin: 0;
+      font-size: 1.38rem;
+      color: #1d4e56;
+      line-height: 1.45;
+    }
+    h3 {
+      font-size: 1.15rem;
+      color: #235863;
+      margin: 26px 0 10px;
+      padding-left: 12px;
+      border-left: 5px solid var(--mint);
+    }
+    p { margin: 0 0 15px; }
+
+    /* Summary Box */
+    .answer-hero {
+      background: linear-gradient(135deg, var(--mint-pale) 0%, #f4fbf9 100%);
+      border: 2px solid var(--mint-border);
+      border-radius: 16px;
+      padding: 22px 26px;
+      margin: 18px 0;
+    }
+    .answer-hero .big-ans {
+      font-size: 1.22rem;
+      font-weight: 800;
+      color: #165950;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* Dialogue Bubbles */
+    .chat-box {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin: 18px 0;
+    }
+    .chat-box.right { flex-direction: row-reverse; }
+    .avatar {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border: 2px solid;
+    }
+    .avatar.dentist {
+      background: var(--coral-pale);
+      border-color: var(--coral-border);
+      color: #a9442e;
+    }
+    .avatar.owl {
+      background: var(--sky-pale);
+      border-color: var(--sky-border);
+      color: #24577a;
+    }
+    .bubble {
+      background: #f8fafc;
+      border: 1.5px solid #dce6ee;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      flex: 1;
+    }
+    .chat-box.dentist-row .bubble {
+      background: var(--coral-pale);
+      border-color: var(--coral-border);
+    }
+    .chat-box.owl-row .bubble {
+      background: var(--sky-pale);
+      border-color: var(--sky-border);
+    }
+
+    /* 4-Panel Manga Grid */
+    .manga-title {
+      text-align: center;
+      background: var(--sunny-pale);
+      border: 2px solid var(--sunny-border);
+      color: #8c5311;
+      font-weight: 800;
+      padding: 8px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 1.02rem;
+    }
+    .manga-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 16px 0 24px;
+    }
+    @media (max-width: 720px) {
+      .manga-grid { grid-template-columns: 1fr; }
+    }
+    .manga-panel {
+      background: #fffdf9;
+      border: 2.5px solid #4a6070;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .manga-panel-head {
+      background: #4a6070;
+      color: #ffffff;
+      padding: 5px 12px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+    }
+    .manga-svg-wrap {
+      padding: 10px;
+      background: #ffffff;
+      text-align: center;
+    }
+    .manga-caption {
+      padding: 12px 14px;
+      background: #fef9ef;
+      border-top: 1.5px dashed #d8cdb8;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* 3 Cards Grid */
+    .three-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 18px 0;
+    }
+    @media (max-width: 760px) {
+      .three-cards { grid-template-columns: 1fr; }
+    }
+    .mini-card {
+      border-radius: 14px;
+      padding: 18px;
+      border: 1.5px solid;
+    }
+    .mini-card.ok { background: var(--mint-pale); border-color: var(--mint-border); }
+    .mini-card.ng { background: var(--coral-pale); border-color: var(--coral-border); }
+    .mini-card.sub { background: var(--sunny-pale); border-color: var(--sunny-border); }
+    .mini-card .mc-tag {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.85);
+    }
+    .mini-card h4 { margin: 4px 0 8px; font-size: 1.02rem; }
+    .mini-card p { margin: 0; font-size: 0.88rem; line-height: 1.7; }
+
+    /* Two Study Cards */
+    .study-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin: 20px 0;
+    }
+    @media (max-width: 740px) {
+      .study-grid { grid-template-columns: 1fr; }
+    }
+    .study-card {
+      border-radius: 16px;
+      padding: 22px;
+      border: 2px solid;
+      background: #ffffff;
+    }
+    .study-card.taylor { border-color: var(--sky-border); background: linear-gradient(180deg, var(--sky-pale) 0%, #fff 42%); }
+    .study-card.costa { border-color: var(--mint-border); background: linear-gradient(180deg, var(--mint-pale) 0%, #fff 42%); }
+    .study-num {
+      font-size: 1.9rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 10px 0 4px;
+    }
+    .study-card.taylor .study-num { color: var(--sky); }
+    .study-card.costa .study-num { color: var(--mint); }
+    .ci-note {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Friendly Table */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 18px 0;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: #ffffff;
+    }
+    th {
+      background: #e9f4f2;
+      color: #1c4b52;
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 800;
+      border-bottom: 2px solid var(--mint-border);
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eeeae0;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* Callouts */
+    .soft-box {
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin: 18px 0;
+      border-left: 6px solid;
+    }
+    .soft-box.sunny { background: var(--sunny-pale); border-color: var(--sunny); }
+    .soft-box.lavender { background: var(--lavender-pale); border-color: var(--lavender); }
+    .soft-box.mint { background: var(--mint-pale); border-color: var(--mint); }
+    .soft-box strong.title {
+      display: block;
+      font-size: 1.02rem;
+      margin-bottom: 6px;
+    }
+
+    /* SVG Illustration Box */
+    .fig-box {
+      background: #ffffff;
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .fig-box svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .fig-cap {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    /* Chairside Script Box */
+    .script-card {
+      background: #fffdf7;
+      border: 2px dashed var(--mint);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin: 16px 0;
+    }
+    .script-card .label {
+      display: inline-block;
+      background: var(--mint);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 3px 11px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 20px 44px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media print {
+      body { background: #fff; font-size: 10.5pt; }
+      .quick-nav { display: none; }
+      section.card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="pill-row">
+      <span class="pill">一般歯科医師（GP）・院内勉強会向け</span>
+      <span class="pill">マンガ＆イラストで5分でわかる簡易版</span>
+      <span class="pill">プロ版（全21章）のエッセンス完全準拠</span>
+    </div>
+    <h1>すでに2型糖尿病がある患者さんに「歯周炎」があると、<br>その後の HbA1c（血糖コントロール）は悪くなるの？</h1>
+    <p class="lead">有名な2018年の国際レビュー（Graziani論文）を最新・厳密に検証し直したら見えてきた「ほんとうのエビデンス」と「統計のカラクリ」を、やさしい図解と4コマ漫画で解説します。</p>
+    <nav class="quick-nav" aria-label="ページ内メニュー">
+      <a href="#manga">1. 4コマ漫画で導入</a>
+      <a href="#question">2. 混ぜちゃダメな3つの話</a>
+      <a href="#studies">3. 世界の厳選2論文と診断法</a>
+      <a href="#stats">4. なぜ合算しないの？（統計の秘密）</a>
+      <a href="#clinic">5. 明日からの患者説明フレーズ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- SECTION 1: 4コマ漫画 ＆ 結論 -->
+  <section id="manga" class="card">
+    <div class="sec-head">
+      <span class="sec-badge">STEP 1</span>
+      <h2>まずは4コマ漫画と「3行まとめ」で全体像をつかもう！</h2>
+    </div>
+
+    <div class="manga-title">4コマ漫画：ミナミ先生の素朴な疑問「治療の話と、放置したら悪化する話は別モノ！？」</div>
+
+    <div class="manga-grid">
+      <!-- Panel 1 -->
+      <div class="manga-panel">
+        <div class="manga-panel-head"><span>第1コマ</span><span>チェアサイドでの疑問</span></div>
+        <div class="manga-svg-wrap">
+          <svg viewBox="0 0 360 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="第1コマ：チェアサイドで悩むミナミ先生">
+            <rect width="360" height="175" fill="#fff9f6"/>
+            <!-- Speech bubble -->
+            <rect x="145" y="14" width="200" height="74" rx="14" fill="#ffffff" stroke="#e06d53" stroke-width="2"/>
+            <polygon points="145,58 128,68 145,72" fill="#ffffff" stroke="#e06d53" stroke-width="2"/>
+            <text x="245" y="38" font-size="12.5" font-weight="bold" fill="#2c3e50" text-anchor="middle">「歯周治療でHbA1cが下がる」</text>
+            <text x="245" y="57" font-size="12.5" fill="#2c3e50" text-anchor="middle">はよく聞くけど、逆に</text>
+            <text x="245" y="76" font-size="12.5" font-weight="bold" fill="#e06d53" text-anchor="middle">歯周炎があると悪化するの？</text>
+            <!-- Dentist illustration -->
+            <circle cx="78" cy="76" r="28" fill="#ffe0bd" stroke="#5d4037" stroke-width="2"/>
+            <path d="M50,70 Q78,35 106,70 Q102,52 78,52 Q54,52 50,70 Z" fill="#4e342e"/>
+            <circle cx="68" cy="76" r="3" fill="#3e2723"/>
+            <circle cx="88" cy="76" r="3" fill="#3e2723"/>
+            <path d="M71,88 Q78,84 85,88" fill="none" stroke="#c0392b" stroke-width="2"/>
+            <path d="M42,165 L52,108 L104,108 L114,165 Z" fill="#ffffff" stroke="#90a4ae" stroke-width="2"/>
+            <path d="M68,108 L78,128 L88,108" fill="none" stroke="#2a9d8f" stroke-width="2.5"/>
+            <text x="78" y="156" font-size="11" font-weight="bold" fill="#546e7a" text-anchor="middle">ミナミ先生(GP)</text>
+          </svg>
+        </div>
+        <div class="manga-caption">糖尿病合併の患者さんを診ているミナミ先生。「歯周病がある人は、歯周病がない人より将来HbA1cが悪くなりやすい」って言い切っていいのかな？</div>
+      </div>
+
+      <!-- Panel 2 -->
+      <div class="manga-panel">
+        <div class="manga-panel-head"><span>第2コマ</span><span>有名な論文をめくってみると…</span></div>
+        <div class="manga-svg-wrap">
+          <svg viewBox="0 0 360 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="第2コマ：フクロウ博士の登場と元論文の落とし穴">
+            <rect width="360" height="175" fill="#f2f9fd"/>
+            <!-- Owl Doctor -->
+            <ellipse cx="82" cy="98" rx="34" ry="38" fill="#8d6e63" stroke="#4e342e" stroke-width="2"/>
+            <ellipse cx="82" cy="108" rx="22" ry="24" fill="#efebe9"/>
+            <circle cx="70" cy="82" r="11" fill="#ffffff" stroke="#37474f" stroke-width="2"/>
+            <circle cx="94" cy="82" r="11" fill="#ffffff" stroke="#37474f" stroke-width="2"/>
+            <circle cx="70" cy="82" r="4" fill="#263238"/>
+            <circle cx="94" cy="82" r="4" fill="#263238"/>
+            <polygon points="78,89 86,89 82,97" fill="#f39c12"/>
+            <!-- Mortarboard cap -->
+            <polygon points="48,62 82,48 116,62 82,72" fill="#2c3e50"/>
+            <text x="82" y="156" font-size="11" font-weight="bold" fill="#24577a" text-anchor="middle">フクロウ疫学博士</text>
+            <!-- Speech bubble -->
+            <rect x="135" y="16" width="210" height="92" rx="14" fill="#ffffff" stroke="#3d7ea6" stroke-width="2"/>
+            <polygon points="135,76 118,84 135,90" fill="#ffffff" stroke="#3d7ea6" stroke-width="2"/>
+            <text x="240" y="40" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">待った！2018年の有名レビューは</text>
+            <text x="240" y="60" font-size="12" fill="#2c3e50" text-anchor="middle">「糖尿病じゃない人が72%」の</text>
+            <text x="240" y="79" font-size="12" fill="#2c3e50" text-anchor="middle">横断データを混ぜてしまっておる！</text>
+            <text x="240" y="98" font-size="11.5" font-weight="bold" fill="#3d7ea6" text-anchor="middle">しかも重要論文(Costa 2017)が漏れ！</text>
+          </svg>
+        </div>
+        <div class="manga-caption">なんと有名な2018年レビュー（Graziani論文）の3.2.2項を監査すると、「その場1回きりの相関データ」が混ざっており、本当に追跡した研究を見落としていました。</div>
+      </div>
+
+      <!-- Panel 3 -->
+      <div class="manga-panel">
+        <div class="manga-panel-head"><span>第3コマ</span><span>世界中を徹底調査して残った「2本」</span></div>
+        <div class="manga-svg-wrap">
+          <svg viewBox="0 0 360 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="第3コマ：厳密に残った2つの研究">
+            <rect width="360" height="175" fill="#f3fbf9"/>
+            <!-- Card A -->
+            <rect x="20" y="24" width="150" height="118" rx="10" fill="#ffffff" stroke="#3d7ea6" stroke-width="2"/>
+            <rect x="20" y="24" width="150" height="28" rx="8" fill="#3d7ea6"/>
+            <text x="95" y="43" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">① Taylor (1996)</text>
+            <text x="95" y="68" font-size="11.5" fill="#2c3e50" text-anchor="middle">悪化ライン超え(二値)</text>
+            <text x="95" y="95" font-size="18" font-weight="bold" fill="#3d7ea6" text-anchor="middle">OR 6.2倍</text>
+            <text x="95" y="116" font-size="10.5" fill="#607385" text-anchor="middle">(95%CI: 1.5〜25.3)</text>
+            <text x="95" y="133" font-size="10" fill="#c0392b" text-anchor="middle">※昔のHbA1検査・80人</text>
+            <!-- Card B -->
+            <rect x="190" y="24" width="150" height="118" rx="10" fill="#ffffff" stroke="#2a9d8f" stroke-width="2"/>
+            <rect x="190" y="24" width="150" height="28" rx="8" fill="#2a9d8f"/>
+            <text x="265" y="43" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">② Costa (2017)</text>
+            <text x="265" y="68" font-size="11.5" fill="#2c3e50" text-anchor="middle">HbA1c変化量(連続量)</text>
+            <text x="265" y="95" font-size="18" font-weight="bold" fill="#2a9d8f" text-anchor="middle">+0.66%</text>
+            <text x="265" y="116" font-size="10.5" fill="#607385" text-anchor="middle">(95%CI: -0.19〜+1.50)</text>
+            <text x="265" y="133" font-size="10" fill="#2a9d8f" text-anchor="middle">※約3.2年追跡・80人</text>
+            <text x="180" y="162" font-size="11.5" font-weight="bold" fill="#1d4e56" text-anchor="middle">どちらも「重度歯周炎で悪化方向」だけど、物差しが違う！</text>
+          </svg>
+        </div>
+        <div class="manga-caption">2026年まで世界中を探しても、条件をピタリと満たす確定コホートは<strong>この2本（計160人）だけ</strong>！しかも「何倍になったか」と「何%増えたか」で物差しが違います。</div>
+      </div>
+
+      <!-- Panel 4 -->
+      <div class="manga-panel">
+        <div class="manga-panel-head"><span>第4コマ</span><span>プロが出した誠実な結論！</span></div>
+        <div class="manga-svg-wrap">
+          <svg viewBox="0 0 360 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="第4コマ：納得するミナミ先生とフクロウ博士">
+            <rect width="360" height="175" fill="#fffaf0"/>
+            <rect x="22" y="18" width="316" height="106" rx="14" fill="#ffffff" stroke="#d98a2b" stroke-width="2"/>
+            <text x="180" y="44" font-size="13" font-weight="bold" fill="#165950" text-anchor="middle">無理に1つの数字に合体させないのが正解！</text>
+            <text x="180" y="68" font-size="12" fill="#2c3e50" text-anchor="middle">✔ 複数の研究が「重度歯周炎で悪化方向」を示唆</text>
+            <text x="180" y="89" font-size="12" fill="#2c3e50" text-anchor="middle">✔ ただし人数が少なく「何%悪化」とはまだ断言不能</text>
+            <text x="180" y="110" font-size="12" font-weight="bold" fill="#e06d53" text-anchor="middle">✔ だからこそ定期的な歯周管理と医科連携が大切！</text>
+            <text x="180" y="152" font-size="12.5" font-weight="bold" fill="#2c3e50" text-anchor="middle">ミナミ先生：「大げさに言わず誠実に伝えられますね！」</text>
+          </svg>
+        </div>
+        <div class="manga-caption">「絶対に〇%悪化する！」と盛りすぎず、「重度歯周炎があると将来の血糖管理が乱れやすくなる懸念を示す追跡研究がある」と伝えるのが科学的にベストです！</div>
+      </div>
+    </div>
+
+    <div class="answer-hero">
+      <span class="big-ans">忙しい先生のための「結論3行まとめ」</span>
+      <ol style="margin:0; padding-left:1.3em;">
+        <li><strong>悪化方向のサインは確かにある：</strong> すでに2型糖尿病がある患者さんを追跡した厳密な研究（Taylor 1996、Costa 2017）では、どちらも<strong>「重度の歯周炎がある人ほど、その後の血糖・HbA1cが悪化しやすい方向」</strong>の結果が出ています。</li>
+        <li><strong>ただし「統合した1つの数字」はまだ出せない：</strong> 2つの研究は「古い検査で9%を超えたか（オッズ比 6.2倍）」と「HbA1cが何ポイント変化したか（＋0.66ポイント）」という<strong>別々の物差し</strong>で測っており、人数も各80人と少ないため、無理に足し算（メタ分析）して「平均〇%悪化する」と確定することはできません。</li>
+        <li><strong>「歯周病ゼロ vs あり」ではなく実際は「重度 vs 非重度」：</strong> 糖尿病患者さんには歯周病がまったくない人がごくわずかなため、実際の研究で比べられているのは<strong>「重度の歯周炎がある人 vs 軽度・中等度までの人」</strong>です。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- SECTION 2: 混ぜちゃダメな話と3つのアウトカム -->
+  <section id="question" class="card">
+    <div class="sec-head">
+      <span class="sec-badge">STEP 2</span>
+      <h2>ここが一番大事！「混ぜちゃダメな話」と「3つの血糖の見方」</h2>
+    </div>
+
+    <p>学会やセミナーで「歯周病と糖尿病は双方向！」と聞くとき、実は<strong>まったく違う質問</strong>がごちゃ混ぜにされがちです。今回のレビューでは、次の仕分けを徹底しました。</p>
+
+    <div class="three-cards">
+      <div class="mini-card ok">
+        <span class="mc-tag" style="color:var(--mint);">今回調べるテーマ（◎）</span>
+        <h4>すでに2型糖尿病がある人の「その後の悪化」</h4>
+        <p>最初から2型糖尿病を持っている人で、<strong>開始時に歯周炎が重い人</strong>は、軽い人より<strong>数年後のHbA1cが悪くなるか？</strong>（コホート研究）</p>
+      </div>
+      <div class="mini-card ng">
+        <span class="mc-tag" style="color:var(--coral);">今回は扱わない別テーマ①</span>
+        <h4>「歯周治療をしたらHbA1cが下がるか？」</h4>
+        <p>SRPなどの治療効果は<strong>ランダム化比較試験（RCT）</strong>で調べるテーマです。「治療で下がる」ことと「放置で上がる」ことは別々に証明が必要です。</p>
+      </div>
+      <div class="mini-card ng">
+        <span class="mc-tag" style="color:var(--coral);">今回は扱わない別テーマ②</span>
+        <h4>「健康な人が新しく糖尿病になるか？」</h4>
+        <p>いま糖尿病がない人が将来糖尿病を<strong>新規発症するリスク</strong>や、ただ<strong>同じ日の歯周ポケットとHbA1cを比べただけ（横断研究）</strong>も別問題です。</p>
+      </div>
+    </div>
+
+    <h3>さらに発見！「将来の血糖が悪い」にも3種類のゴールがある</h3>
+    <p>「数年後の血糖コントロールを見る」といっても、論文によってゴールの決め方が<strong>A・B・Cの3種類</strong>に分かれていました。ここを区別したのがプロ版のすごいところです。</p>
+
+    <div class="fig-box">
+      <svg viewBox="0 0 820 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3つの血糖アウトカムの違いイラスト">
+        <rect width="820" height="230" rx="12" fill="#fcfdfd"/>
+        <!-- Box A -->
+        <rect x="18" y="18" width="248" height="194" rx="12" fill="#eef6fb" stroke="#bfdcf0" stroke-width="2"/>
+        <text x="142" y="46" font-size="14" font-weight="bold" fill="#24577a" text-anchor="middle">ゴールA：新しく悪化ライン超え</text>
+        <text x="142" y="68" font-size="11.5" fill="#475569" text-anchor="middle">【Taylor 1996 が採用】</text>
+        <line x1="42" y1="125" x2="242" y2="125" stroke="#e06d53" stroke-width="2" stroke-dasharray="5,4"/>
+        <text x="238" y="118" font-size="10.5" fill="#e06d53" text-anchor="end">不良ライン(9%)</text>
+        <circle cx="68" cy="155" r="7" fill="#3d7ea6"/>
+        <text x="68" y="176" font-size="11" fill="#2c3e50" text-anchor="middle">開始時(良好)</text>
+        <path d="M78,150 L195,95" stroke="#c0392b" stroke-width="3" fill="none"/>
+        <circle cx="202" cy="92" r="7" fill="#c0392b"/>
+        <text x="142" y="198" font-size="11.5" fill="#24577a" text-anchor="middle">最初は未満だった人が超えたか？</text>
+
+        <!-- Box B -->
+        <rect x="286" y="18" width="248" height="194" rx="12" fill="#eaf7f5" stroke="#b5e2dc" stroke-width="2"/>
+        <text x="410" y="46" font-size="14" font-weight="bold" fill="#165950" text-anchor="middle">ゴールB：HbA1cの変化量（差）</text>
+        <text x="410" y="68" font-size="11.5" fill="#475569" text-anchor="middle">【Costa 2017 が採用】</text>
+        <path d="M325,152 L475,96" stroke="#e06d53" stroke-width="3"/>
+        <text x="485" y="99" font-size="11" font-weight="bold" fill="#e06d53">重度群</text>
+        <path d="M325,152 L475,134" stroke="#2a9d8f" stroke-width="3"/>
+        <text x="485" y="138" font-size="11" font-weight="bold" fill="#2a9d8f">非重度群</text>
+        <line x1="460" y1="102" x2="460" y2="132" stroke="#165950" stroke-width="2"/>
+        <text x="415" y="122" font-size="12" font-weight="bold" fill="#165950" text-anchor="end">差 +0.66%</text>
+        <text x="410" y="198" font-size="11.5" fill="#165950" text-anchor="middle">「追跡時 − 開始時」の伸び幅の差は？</text>
+
+        <!-- Box C -->
+        <rect x="554" y="18" width="248" height="194" rx="12" fill="#fff8eb" stroke="#f5dcb0" stroke-width="2"/>
+        <text x="678" y="46" font-size="14" font-weight="bold" fill="#8c5311" text-anchor="middle">ゴールC：ゴール時点で目標未達</text>
+        <text x="678" y="68" font-size="11.5" fill="#475569" text-anchor="middle">【条件付き候補 Zhang 2026】</text>
+        <line x1="578" y1="135" x2="778" y2="135" stroke="#d98a2b" stroke-width="2" stroke-dasharray="5,4"/>
+        <text x="774" y="128" font-size="10.5" fill="#8c5311" text-anchor="end">7.0%ライン</text>
+        <circle cx="605" cy="90" r="6" fill="#d98a2b"/>
+        <path d="M613,92 L735,112" stroke="#d98a2b" stroke-width="2.5"/>
+        <circle cx="742" cy="114" r="6" fill="#d98a2b"/>
+        <text x="678" y="168" font-size="11" fill="#8c5311" text-anchor="middle">※8.8%→7.2%に改善した人も</text>
+        <text x="678" y="185" font-size="11" font-weight="bold" fill="#c0392b" text-anchor="middle">「7%以上＝不良」に入ってしまう！</text>
+      </svg>
+      <div class="fig-cap">たとえば HbA1c が 8.8% から 7.2% に下がった患者さんは「改善」していますが、ゴールCのルール（1年後に7.0%以上か？）では「管理不良」と判定されてしまいます。だから A・B・C を無造作に同じ袋に入れて計算してはいけないのです。</div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: 厳選された研究と歯周病の診断法 -->
+  <section id="studies" class="card">
+    <div class="sec-head">
+      <span class="sec-badge">STEP 3</span>
+      <h2>世界中で見つかった「中心2論文＋条件付き1論文」と歯周病の測り方</h2>
+    </div>
+
+    <p>数百本の論文を徹底チェックした結果、本当に「既存の2型糖尿病患者さんを開始時の歯周病で分けて追跡した」と言える確定採用論文は <strong>Taylor (1996)</strong> と <strong>Costa (2017)</strong> の2本でした（もう1本、2026年の <strong>Zhang論文</strong> が条件付き参考候補として見つかりました）。</p>
+
+    <div class="study-grid">
+      <div class="study-card taylor">
+        <span class="pill" style="border-color:var(--sky-border); color:var(--sky);">確定採用①・ゴールA（二値）</span>
+        <h3 style="border-color:var(--sky); margin-top:10px;">Taylor et al. (1996)｜米国</h3>
+        <div class="study-num">調整オッズ比 6.2 倍</div>
+        <div class="ci-note">95%信頼区間：1.5 〜 25.3 倍（統計学的に有意）</div>
+        <p style="font-size:0.9rem;">米国ピマ・インディアンの2型糖尿病患者80人（延べ89区間、開始時 HbA1＜9%）を約2年間隔で追跡。開始時に重度の付着喪失があった群は <strong>37.0%（10/27）</strong> が9%以上に悪化したのに対し、対照群は <strong>11.3%（7/62）</strong> でした。</p>
+        <p style="font-size:0.84rem; color:var(--muted); margin-bottom:0;"><strong>【注意点】</strong> 今の HbA1c ではなく昔の「総HbA1（電気泳動法）」を使っており、1.5倍〜25.3倍と推定の幅がとても広い研究です。</p>
+      </div>
+
+      <div class="study-card costa">
+        <span class="pill">確定採用②・ゴールB（連続量）</span>
+        <h3 style="margin-top:10px;">Costa et al. (2017)｜ブラジル</h3>
+        <div class="study-num">調整差 ＋0.66 ポイント</div>
+        <div class="ci-note">95%信頼区間：−0.19 〜 ＋1.50（p = 0.13）</div>
+        <p style="font-size:0.9rem;">非喫煙・服薬中の2型糖尿病患者80人を、歯周治療なしで平均38.6か月（約3.2年）追跡。開始時 HbA1c だけを調整した Model 1 では <strong>＋0.85%（p = 0.04）</strong>、性別も調整した Model 2 では <strong>＋0.66%（p = 0.13）</strong> 重度群の方が上昇していました。</p>
+        <p style="font-size:0.84rem; color:var(--muted); margin-bottom:0;"><strong>【注意点】</strong> 悪化方向を示していますが、性別も調整すると「差なし（0%）」から「大きな悪化（+1.5%）」まで幅があり、単独では断定しきれません。</p>
+      </div>
+    </div>
+
+    <h3>歯科医師なら一番気になる！「歯周病の診断基準」はどう測っていた？</h3>
+    <p>「重度歯周炎」と一言で言っても、論文ごとにプロービングのやり方や基準がこんなに違っていました。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>研究名</th>
+            <th>どの歯をどう測った？</th>
+            <th>「重度」の具体的な診断ライン</th>
+            <th>比べる相手（対照群）の中身</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Taylor (1996)</strong><br><span style="color:var(--sky); font-size:0.8rem; font-weight:bold;">確定採用</span></td>
+            <td>・<strong>Ramfjordの6代表歯</strong>のみをプロービング（部分診査）<br>・別解析でパノラマX線の骨吸収も評価</td>
+            <td>・<strong>臨床定義：</strong>代表歯が1本でも <strong>最大CAL ≧ 6 mm</strong><br>・<strong>X線定義：</strong>1本でも<strong>骨吸収 ≧ 50%</strong></td>
+            <td>CAL ＜ 6 mm の人たち<br>（※歯周病ゼロではなく、軽度や中等度の人も含まれる）</td>
+          </tr>
+          <tr>
+            <td><strong>Costa (2017)</strong><br><span style="color:var(--mint); font-size:0.8rem; font-weight:bold;">確定採用</span></td>
+            <td>・親知らずを除く<strong>全歯6点法</strong>でポケット深さ（PD）を測定<br>・退縮部位からALを算出し各歯の最悪部位を使用</td>
+            <td>CDC/AAP基準ベース：<br><strong>別々の歯の隣接面2か所以上で AL ＞ 6 mm</strong> かつ <strong>1か所以上で PD ≧ 5 mm</strong><br><small>（※原著には ≥6 ではなく &gt;6 と記載）</small></td>
+            <td>非重度 50人<br>（内訳：<strong>健康/軽度 16人 ＋ 中等度歯周炎 34人</strong>。つまり相手の大半は中等度！）</td>
+          </tr>
+          <tr style="background:#fffaf0;">
+            <td><strong>Zhang (2026)</strong><br><span style="color:var(--sunny); font-size:0.8rem; font-weight:bold;">条件付き候補</span></td>
+            <td>・2型糖尿病320人を12か月追跡（調整OR <strong>1.84</strong>［1.12〜3.02］）<br>・<strong>プロービング部位数や使用分類の記載なし！</strong></td>
+            <td>「中等度〜重度歯周炎」とだけ書かれており、<strong>何mm以上かという診断基準が原著に未記載</strong></td>
+            <td>「非・中等度〜重度歯周炎」<br>（診断基準が確認できないため、主結果には混ぜず<strong>参考扱い</strong>に隔離）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chat-box dentist-row">
+      <div class="avatar dentist">ミナミ<br>先生</div>
+      <div class="bubble">なるほど〜！Costa論文の比較相手（50人）のうち、<strong>34人は「中等度歯周炎」</strong>なんですね！それなら「重度 vs 中等度」に近い比較になっているから、差が ＋0.66% と少しマイルドに出たのも納得です。もし「歯肉が完全に健康な人」と比べたらもっと差があったかもしれませんね。</div>
+    </div>
+    <div class="chat-box owl-row">
+      <div class="avatar owl">フクロウ<br>博士</div>
+      <div class="bubble">その通りじゃ！逆に言えば、今回のデータから<strong>「ちょっとでも歯周病がある人は、まったくない人よりHbA1cが悪くなる」と拡大解釈してはいけない</strong>ということでもある。今わかっているのはあくまで「重度の歯周炎」についての所見なのじゃよ。</div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: 統計と2つのフォレストプロットのやさしい解説 -->
+  <section id="stats" class="card">
+    <div class="sec-head">
+      <span class="sec-badge">STEP 4</span>
+      <h2>統計のモヤモヤを解消！なぜ「2つの図」に分けて、mKH法と比べるとどうなるの？</h2>
+    </div>
+
+    <p>プロ版の解説書では、無理やりすべての研究を1つの数字に合体させるのではなく、<strong>「二値アウトカム（OR）の図1」と「連続アウトカム（HbA1c変化量）の図2」の2つのフォレストプロットに分けて表示</strong>しています。その理由と、統計の最新トピック「mKH法」のカラクリをやさしく見てみましょう。</p>
+
+    <div class="soft-box mint">
+      <strong class="title">ポイント①：「調整済み（ハンデを揃えた数値）」を使う理由</strong>
+      <p style="margin:0;">たとえば高齢の人や喫煙者、もともとの HbA1c が高い人は、歯周病も重くなりやすく、将来の血糖も悪くなりやすいですよね（これを<strong>交絡因子</strong>と呼びます）。生の平均値をそのまま比べると「歯周病のせい」なのか「年齢や元の血糖値のせい」なのかわかりません。だからプロ版では、回帰分析（ロジスティック回帰・GEE・重回帰）を使って<strong>「年齢や開始時の血糖値などの条件を揃えた後の『調整済み効果』」</strong>だけを取り出して比較しています。</p>
+    </div>
+
+    <h3>ポイント②：プロ版が描いた「2つのフォレストプロット」をやさしく読む！</h3>
+    <p>もし参考練習として、同じ「オッズ比（OR）」で結果を出している <strong>Taylor (1996)</strong> と条件付き候補の <strong>Zhang (2026)</strong> の2つをメタ分析で平均すると、中心の値は <strong>OR ＝ 2.80倍</strong> になります。ところが、<strong>「95%信頼区間（ブレ幅）」の計算方法を「従来のWald法」にするか「最新の修正Knapp–Hartung法（mKH法）」にするかで、見た目が劇的に変わります！</strong></p>
+
+    <div class="fig-box">
+      <svg viewBox="0 0 840 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2つのフォレストプロットのやさしい比較図">
+        <rect width="840" height="360" rx="12" fill="#ffffff"/>
+        <!-- Left Panel: Binary OR -->
+        <rect x="14" y="14" width="465" height="332" rx="12" fill="#fffaf4" stroke="#ebcca9" stroke-width="2"/>
+        <text x="28" y="40" font-size="13.5" font-weight="bold" fill="#984b17">【図1：参考メタ分析】悪化・未達のオッズ比（OR）</text>
+        <text x="28" y="59" font-size="11" fill="#607385">※Taylor（確定）＋ Zhang（条件付き候補）を合わせた参考計算</text>
+
+        <!-- Zero effect line at OR=1 (x=215) -->
+        <line x1="215" y1="74" x2="215" y2="275" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <text x="215" y="292" font-size="10.5" fill="#c0392b" text-anchor="middle">OR = 1（差なし）</text>
+
+        <!-- Taylor -->
+        <text x="26" y="102" font-size="12" font-weight="bold" fill="#2c3e50">Taylor 1996</text>
+        <line x1="226" y1="98" x2="305" y2="98" stroke="#3d7ea6" stroke-width="3"/>
+        <circle cx="266" cy="98" r="6" fill="#3d7ea6"/>
+        <text x="345" y="102" font-size="11.5" fill="#2c3e50">OR 6.2 [1.5 〜 25.3]</text>
+
+        <!-- Zhang -->
+        <text x="26" y="142" font-size="12" font-weight="bold" fill="#8c5311">Zhang 2026 (条件付)</text>
+        <line x1="218" y1="138" x2="246" y2="138" stroke="#d98a2b" stroke-width="3"/>
+        <rect x="226" y="131" width="13" height="13" fill="#d98a2b"/>
+        <text x="345" y="142" font-size="11.5" fill="#8c5311">OR 1.84 [1.12 〜 3.02]</text>
+
+        <line x1="26" y1="166" x2="462" y2="166" stroke="#e6d5c3" stroke-width="1"/>
+
+        <!-- Wald Diamond -->
+        <text x="26" y="198" font-size="11.5" font-weight="bold" fill="#245f91">参考平均 (Wald法)</text>
+        <polygon points="212,194 244,186 276,194 244,202" fill="#245f91"/>
+        <text x="345" y="198" font-size="11.5" font-weight="bold" fill="#245f91">OR 2.80 [0.90 〜 8.65]</text>
+
+        <!-- mKH Diamond (huge!) -->
+        <text x="26" y="242" font-size="11.5" font-weight="bold" fill="#984b17">参考平均 (mKH法)</text>
+        <line x1="138" y1="238" x2="335" y2="238" stroke="#984b17" stroke-width="2.5"/>
+        <polygon points="138,238 146,233 146,243" fill="#984b17"/>
+        <polygon points="335,238 327,233 327,243" fill="#984b17"/>
+        <circle cx="244" cy="238" r="5" fill="#984b17"/>
+        <text x="342" y="238" font-size="11" font-weight="bold" fill="#984b17">OR 2.80</text>
+        <text x="342" y="254" font-size="10.5" font-weight="bold" fill="#c0392b">[0.00185 〜 4,220 !!]</text>
+
+        <text x="246" y="324" font-size="11" fill="#71370f" text-anchor="middle">▲ 同じ平均（2.80倍）でも、2研究しかないとmKH法の幅は超巨大に！</text>
+
+        <!-- Right Panel: Continuous Costa -->
+        <rect x="495" y="14" width="331" height="332" rx="12" fill="#eaf7f5" stroke="#b5e2dc" stroke-width="2"/>
+        <text x="510" y="40" font-size="13.5" font-weight="bold" fill="#165950">【図2：主要連続結果】HbA1c変化量差</text>
+        <text x="510" y="59" font-size="11" fill="#607385">※Costa 2017 単独（性別・開始時HbA1c調整）</text>
+
+        <!-- Zero line at x=615 -->
+        <line x1="615" y1="84" x2="615" y2="255" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,4"/>
+        <text x="615" y="274" font-size="10.5" fill="#c0392b" text-anchor="middle">0.0%（差なし）</text>
+
+        <!-- Costa point & CI (-0.19 to +1.50) -->
+        <line x1="598" y1="168" x2="750" y2="168" stroke="#176448" stroke-width="4"/>
+        <line x1="598" y1="158" x2="598" y2="178" stroke="#176448" stroke-width="2.5"/>
+        <line x1="750" y1="158" x2="750" y2="178" stroke="#176448" stroke-width="2.5"/>
+        <rect x="666" y="159" width="18" height="18" rx="3" fill="#176448"/>
+
+        <text x="660" y="138" font-size="15" font-weight="bold" fill="#165950" text-anchor="middle">＋0.66 ポイント</text>
+        <text x="660" y="206" font-size="12" fill="#2c3e50" text-anchor="middle">95% CI：−0.19 〜 ＋1.50（p = 0.13）</text>
+        <text x="660" y="314" font-size="11" fill="#165950" text-anchor="middle">右（悪化側）に寄っているが、左端が少し0をまたぐ</text>
+        <text x="660" y="331" font-size="11" fill="#165950" text-anchor="middle">（開始時HbA1cのみ調整なら +0.85［+0.02〜+1.67］）</text>
+      </svg>
+    </div>
+
+    <div class="soft-box sunny">
+      <strong class="title">なぜ図1の「mKH法」は 0.00185倍 〜 4,220倍 というとんでもない幅になるの？</strong>
+      <p style="margin-bottom:8px;">研究が<strong>たった2本</strong>しかないとき、「研究同士がどれくらいバラついているか」を正確に見積もるのは至難の業です。</p>
+      <ul style="margin:0; padding-left:1.3em; font-size:0.93rem;">
+        <li><strong>従来の Wald 法：</strong> 誤差（SE）にいつもの <strong>「1.96」</strong> を掛けて区間を作ります（0.90〜8.65倍）。ただ、2研究しかないときには少し楽観的すぎる（狭すぎる）心配があります。</li>
+        <li><strong>修正 Knapp–Hartung 法（mKH法）：</strong> 「2研究しかない（自由度1）なら慎重にいこう！」と、1.96 の代わりに <strong>「12.706」（約6.5倍！）</strong> という巨大な安全係数を掛け算します。すると指数計算で膨れ上がり、<strong>0.00185 〜 4,220倍</strong> というほぼ無限大のような幅になってしまうのです。</li>
+        <li><strong>ここからわかる教訓：</strong> 統計手法を変えてここまで幅が変わってしまうのは、<strong>「そもそも比較できる質の高い研究がまだ2本しかなく、合算して1つの確定値を出すにはデータ不足である」</strong>という何よりの証拠なのです。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION 5: 明日からの臨床・チェアサイドでの活かし方 -->
+  <section id="clinic" class="card">
+    <div class="sec-head">
+      <span class="sec-badge">STEP 5</span>
+      <h2>明日からの診療でどう活かす？患者さん＆内科主治医への誠実な伝え方</h2>
+    </div>
+
+    <p>「まだ確定的な統合数値（平均〇%悪化）までは言えない」と聞くと、「じゃあ歯科で歯周病を診ても意味がないの？」と思うかもしれませんが、<strong>答えは正反対（大いに意味がある！）</strong>です。</p>
+    <p>なぜなら、①今回の観察コホート研究（放置・自然経過）では<strong>「重度歯周炎があると将来の血糖管理が悪化する方向」</strong>のサインが一貫して出ており、②別のランダム化比較試験（RCT）の世界では<strong>「歯周病治療を行うと HbA1c が約 0.3〜0.6% 下がる」</strong>というエビデンスがすでに確立しているからです。ただ、科学者・医療人として<strong>「言えること」と「言い過ぎてはいけないこと」</strong>を分けて話すことで、内科の先生や患者さんからの信頼がぐっと高まります。</p>
+
+    <div class="script-card">
+      <span class="label">そのまま使える！チェアサイドでの患者さんへの説明トーク例</span>
+      <p style="margin:0; font-size:0.96rem;">「〇〇さん、糖尿病があると歯ぐきの炎症が進みやすいのですが、実は逆方向の追跡研究でも、<strong>重度の歯周炎をそのままにしておくと、数年後の血糖コントロール（HbA1c）が乱れやすくなる可能性</strong>が報告されています。『必ず何%上がる』と決まっているわけではありませんが、深い歯周ポケットは体の中でずっと小さな炎症が続いている状態なので、内科のお薬の効果をしっかり支えるためにも、お口の炎症を一緒にコントロールしていきましょうね。」</p>
+    </div>
+
+    <div class="script-card" style="border-color:var(--sky); background:#f7fbfe;">
+      <span class="label" style="background:var(--sky);">診療情報提供書（医科歯科連携）でのスマートな書き方</span>
+      <p style="margin:0; font-size:0.96rem;">「貴院にて加療中の2型糖尿病につきまして、当院歯周組織検査にて重度歯周炎（5mm以上の深い歯周ポケットおよび歯槽骨吸収）を認めました。重度歯周炎の存在・進行は長期的な血糖管理悪化と関連し得ることが縦断研究でも示唆されており、また歯周基本治療による血糖管理への好影響も報告されておりますので、歯周炎症の除去と継続的なメインテナンスを実施いたします。」</p>
+    </div>
+
+    <div class="soft-box lavender" style="margin-bottom:0;">
+      <strong class="title">もっと深く勉強したい先生へ（プロ版ハンドブックへのご案内）</strong>
+      <p style="margin:0; font-size:0.92rem;">「原著論文のどの表のどのセルから数字を拾ったのか自分の目で確認したい！」「GEEと混合効果モデル（GLMM）の数式の違いを知りたい！」「RStudioで自分の手でフォレストプロットを描いてみたい！」という先生は、ぜひペア教材である<strong>『プロ版：歯周炎と血糖コントロール 観察研究レビュー・交絡調整・メタ分析の解説書（全21章）』</strong>を開いてみてください。この簡易版で全体像をつかんでから読むと、プロ版の数式やRコードが驚くほどスッと頭に入ってきます！</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>【一般歯科医師向け・やさしい図解＆マンガ簡易版】既存2型糖尿病における歯周炎と将来の血糖コントロール</strong><br>
+    プロ版ハンドブック（2026年11月23日版・全21章）準拠 ／ 院内勉強会・チェアサイド説明用ガイド（外部通信不要・オフライン対応HTML）</p>
+  </div>
+</footer>
+
+</body>
+</html>
