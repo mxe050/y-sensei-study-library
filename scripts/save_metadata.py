@@ -1,16 +1,19 @@
-"""Apply an owner-submitted classification request against the current main branch."""
+"""Apply an owner-submitted library metadata request against the current main branch."""
 
 import json
 import os
 from pathlib import Path
 import subprocess
 
-from build import ArticleParser, ROOT, classification, display_text, is_entry
+from build import ArticleParser, ROOT, article_title_override, classification, display_text, is_entry
+from site_title_request import SiteTitleError, save_site_title
 
 
 REPOSITORY = 'mxe050/y-sensei-study-library'
 OWNER = REPOSITORY.split('/')[0]
 ISSUE_TITLE = '[書斎] 分類・タグを保存'
+ARTICLE_TITLE = '[書斎] 文献情報を保存'
+SITE_TITLE = '[書斎] 書斎名を保存'
 
 
 class RequestError(ValueError):
@@ -23,8 +26,8 @@ def request_details(event):
             or event.get('repository', {}).get('full_name') != REPOSITORY
             or event.get('sender', {}).get('login') != OWNER
             or issue.get('user', {}).get('login') != OWNER
-            or issue.get('title') != ISSUE_TITLE):
-        raise RequestError('掲載者からの分類・タグ保存依頼を確認できません。')
+            or issue.get('title') not in (ISSUE_TITLE, ARTICLE_TITLE, SITE_TITLE)):
+        raise RequestError('掲載者からの保存依頼を確認できません。')
     body = issue.get('body')
     if not isinstance(body, str) or len(body) > 24000:
         raise RequestError('保存フォームの内容を確認してください。')
@@ -32,7 +35,14 @@ def request_details(event):
         data = json.loads(body)
     except (ValueError, RecursionError) as error:
         raise RequestError('保存フォームの内容を読み取れません。') from error
-    if not isinstance(data, dict) or set(data) != {'article', 'category', 'tags', 'previous'}:
+    fields = {
+        ISSUE_TITLE: {'article', 'category', 'tags', 'previous'},
+        ARTICLE_TITLE: {'article', 'title', 'category', 'tags', 'previous'},
+        SITE_TITLE: {'siteTitle', 'previous'},
+    }[issue['title']]
+    if (not isinstance(data, dict) or set(data) != fields
+            or not isinstance(data['previous'], dict)
+            or set(data['previous']) != fields - {'article', 'previous'}):
         raise RequestError('保存フォームを開き直してください。')
     return data
 
@@ -68,12 +78,27 @@ def save(root, data):
     current = {'category': stored['category'], 'tags': stored['tags']}
     previous = clean_labels(data['previous'], False)
     updated = clean_labels(data, True)
+    if 'title' in data:
+        try:
+            previous['title'] = article_title_override(data['previous'].get('title'))
+            updated['title'] = article_title_override(data['title'])
+        except ValueError as error:
+            raise RequestError('文献タイトルは300文字以内の文字列で指定してください。') from error
+        current['title'] = stored['titleOverride']
     visible = {**updated, 'category': updated['category'] or '未分類'}
     if current == visible:
         return None
     if previous != current:
-        raise RequestError('編集中に分類・タグが変更されました。最新の掲載者メニューで確認して依頼し直してください。')
-    sidecar.write_text(json.dumps(updated, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        raise RequestError('編集中に文献情報が変更されました。最新の掲載者メニューで確認して依頼し直してください。')
+    # A title-only edit must keep tags/categories inherited from the original HTML.
+    # Older forms know nothing about titles and must retain existing overrides.
+    metadata = json.loads(sidecar.read_text(encoding='utf-8-sig')) if sidecar.is_file() else {}
+    for key, value in updated.items():
+        if key == 'title' and not value:
+            metadata.pop('title', None)
+        elif visible[key] != current[key] or ('title' not in data and key in ('category', 'tags')):
+            metadata[key] = value
+    sidecar.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return str(sidecar.relative_to(root))
 
 
@@ -88,11 +113,17 @@ def apply_on_main(root, data):
         # requires validating the same request against the new state again.
         git('fetch', '--no-tags', 'origin', 'refs/heads/main', check=True)
         git('reset', '--hard', 'FETCH_HEAD', check=True)
-        path = save(root, data)
+        if 'siteTitle' in data:
+            try:
+                path = save_site_title(root, data)
+            except SiteTitleError as error:
+                raise RequestError(str(error)) from error
+        else:
+            path = save(root, data)
         if path is None:
             return
         git('--literal-pathspecs', 'add', '--', path, check=True)
-        git('commit', '-m', '文献の分類とタグを更新', check=True)
+        git('commit', '-m', '書斎名を更新' if 'siteTitle' in data else '文献情報を更新', check=True)
         if git('push', 'origin', 'HEAD:refs/heads/main').returncode == 0:
             return
     raise RequestError('GitHubへの書き込みを完了できませんでした。公開処理の記録を確認してください。')

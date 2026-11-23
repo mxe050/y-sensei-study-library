@@ -4,17 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,follow">
-  <title>文献の掲載・差し替え｜Y先生文献の書斎</title>
+  <title>文献の掲載・差し替え｜{{SITE_TITLE}}</title>
   <link rel="stylesheet" href="assets/manage.css">
   <script type="application/json" id="catalog-data">[]</script>
   <script defer src="assets/manage.js"></script>
+  <script defer src="assets/site-title.js"></script>
 </head>
 <body>
-<header><div class="bar"><a class="wordmark" href="./index.html">Y先生文献の書斎</a><a class="back" href="./index.html">書斎に戻る</a></div></header>
+<header><div class="bar"><a class="wordmark" href="./index.html">{{SITE_TITLE}}</a><a class="back" href="./index.html">書斎に戻る</a></div></header>
 <main>
   <h1>文献の掲載・差し替え</h1>
-  <p class="intro">公開用のHTMLを追加したり、掲載した文献に分類とタグを付けたりできます。</p>
-  <noscript><p>掲載先の選択と分類の入力には、ブラウザーのJavaScriptを有効にしてください。</p></noscript>
+  <p class="intro">公開用のHTMLを追加したり、掲載した文献のタイトル・分類・タグを変更したりできます。</p>
+  <noscript><p>掲載先の選択と文献情報の入力には、ブラウザーのJavaScriptを有効にしてください。</p></noscript>
+  <details id="site-title-settings" class="site-settings">
+    <summary>書斎のタイトルを変更</summary>
+    <form id="site-title-form" action="https://github.com/mxe050/y-sensei-study-library/issues/new" method="get" target="_blank" rel="noopener noreferrer">
+      <div class="field">
+        <label for="site-title">書斎のタイトル</label>
+        <input id="site-title" type="text" required autocomplete="off" aria-describedby="site-title-hint site-title-error">
+        <p class="caption" id="site-title-hint">80文字まで。表紙と各ページの書斎名に反映されます。</p>
+      </div>
+      <p class="warning" id="site-title-error" aria-live="polite"></p>
+      <input type="hidden" name="title" value="[書斎] 書斎名を保存">
+      <input type="hidden" name="body" id="site-title-request">
+      <button class="primary" type="submit" id="site-title-save" disabled>GitHubで書斎名を保存 ↗</button>
+      <p class="caption">次の画面で所有者として <span lang="en">Create</span> を押すと、公開版を更新します。</p>
+    </form>
+  </details>
   <section aria-labelledby="where">
     <h2 id="where"><label for="target">掲載する文献</label></h2>
     <select id="target"><option value="">新しく文献を掲載する</option></select>
@@ -28,7 +44,12 @@
     </div>
   </section>
   <section aria-labelledby="classification-heading">
-    <h2 id="classification-heading">分類・タグ</h2>
+    <h2 id="classification-heading">タイトル・分類・タグ</h2>
+    <div class="field">
+      <label for="article-title">文献タイトル</label>
+      <input id="article-title" type="text" aria-describedby="article-title-hint" autocomplete="off" placeholder="HTMLのタイトルを使用">
+      <p class="caption" id="article-title-hint">タイトルだけでも変更できます。空欄にすると元のHTMLから取得したタイトルを使います。</p>
+    </div>
     <div class="field">
       <label for="category">分類</label>
       <input id="category" type="text" maxlength="100" list="category-options" placeholder="例：歯科保存学" autocomplete="off">
@@ -44,14 +65,14 @@
     <h2 id="publish-heading">GitHubに保存する</h2>
     <p id="upload-instruction" aria-live="polite">公開するHTMLを選んでください。</p>
     <div id="issue-actions" hidden>
-      <a id="issue-save" class="primary" target="_blank" rel="noopener noreferrer">GitHubで分類・タグを保存 ↗</a>
+      <a id="issue-save" class="primary" target="_blank" rel="noopener noreferrer">GitHubで文献情報を保存 ↗</a>
       <p class="caption">書斎の所有者としてGitHubにログインし、次の画面で <span lang="en">Create</span> を押してください。公開の更新依頼が作られ、処理結果はその依頼に届きます。</p>
     </div>
     <div id="standard-actions">
       <div id="file-actions">
         <p id="file-instruction"></p>
         <div class="actions">
-          <button id="download-meta" type="button" hidden>分類ファイルをダウンロード</button>
+          <button id="download-meta" type="button" hidden>文献情報ファイルをダウンロード</button>
           <a id="upload" class="primary" href="https://github.com/mxe050/y-sensei-study-library/upload/main/articles" target="_blank" rel="noopener noreferrer">GitHubのアップロード画面を開く ↗</a>
         </div>
         <p id="save-status" class="save-status" role="status"></p>
@@ -59,7 +80,7 @@
       </div>
     </div>
     <details id="fallback" hidden>
-      <summary>分類ファイルをアップロードして保存する方法</summary>
+      <summary>文献情報ファイルをアップロードして保存する方法</summary>
       <div id="fallback-body"></div>
     </details>
   </section>

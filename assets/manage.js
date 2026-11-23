@@ -7,18 +7,20 @@
   const panel = byId('inspection');
   const preview = byId('preview');
   const frame = byId('document');
+  const articleTitle = byId('article-title');
   const category = byId('category');
   const tags = byId('tags');
   const download = byId('download-meta');
   const upload = byId('upload');
   const entries = new Map();
-  const newMetadata = () => ({category: '', tags: []});
+  const newMetadata = () => ({title: '', category: '', tags: []});
   let prepared = '';
   let readVersion = 0;
   let fileStatus = '';
   let fileReady = false;
   let fileMetadata = newMetadata();
-  let touched = {category: false, tags: false};
+  let fileSourceTitle = '';
+  let touched = {title: false, category: false, tags: false};
 
   function articleParts(path) {
     if (typeof path !== 'string') return null;
@@ -37,9 +39,13 @@
   for (const item of catalog) {
     const parts = articleParts(item.path);
     if (!parts || entries.has(item.path)) continue;
-    const metadata = {category: item.category === '未分類' ? '' : item.category || '', tags: item.tags || []};
+    const metadata = {title: item.titleOverride || '', category: item.category === '未分類' ? '' : item.category || '', tags: item.tags || []};
     if (metadata.category) categories.add(metadata.category);
-    entries.set(item.path, {parts, metadata, previous: {category: item.category || '未分類', tags: metadata.tags}, hasMetadata: item.hasMetadata});
+    entries.set(item.path, {
+      parts, metadata, sourceTitle: item.sourceTitle || item.title || parts.at(-1),
+      previous: {title: metadata.title, category: item.category || '未分類', tags: metadata.tags},
+      fields: item.metadataFields || (item.hasMetadata ? Object.keys(metadata) : [])
+    });
     target.add(new Option(item.title || parts.at(-1), item.path));
   }
   for (const name of [...categories].sort((a, b) => a.localeCompare(b, 'ja'))) {
@@ -50,8 +56,23 @@
     return [...new Set(text.split(/[,，、;；\r\n]+/).map(tag => tag.trim()).filter(Boolean))];
   }
 
+  function sourceTitle() {
+    return fileSourceTitle || entries.get(target.value)?.sourceTitle || '';
+  }
+
+  function showTitle() {
+    const original = sourceTitle();
+    articleTitle.placeholder = original || 'HTMLのタイトルを使用';
+    if (!touched.title) articleTitle.value = entries.get(target.value)?.metadata.title || original;
+  }
+
   function formMetadata() {
-    return {category: category.value.trim(), tags: splitTags(tags.value)};
+    const value = articleTitle.value.trim().replace(/\s+/g, ' ');
+    // When the field is untouched, keep the saved override exactly as it was.
+    // The title supplied by the HTML then follows a later file replacement.
+    const saved = entries.get(target.value)?.metadata.title || '';
+    const title = touched.title ? (value === sourceTitle() ? '' : value) : saved;
+    return {title, category: category.value.trim(), tags: splitTags(tags.value)};
   }
 
   function metadataFilename() {
@@ -69,25 +90,27 @@
     byId('file-label').textContent = entry ? '新しいHTMLに差し替える（任意）' : '公開するHTMLファイル';
     const mismatch = parts && file && parts.at(-1) !== file.name;
     const status = byId('selection');
-    status.textContent = fileStatus || (entry ? '分類・タグだけを変えるときは、ファイルの選択は不要です。' : 'ファイルを選ぶと、本文と画像をこの端末で確認できます。');
+    status.textContent = fileStatus || (entry ? '文献タイトル・分類・タグは、この下の欄で直接変更できます。' : 'ファイルを選ぶと、本文と画像をこの端末で確認できます。');
     status.classList.toggle('warning', Boolean(mismatch));
     if (mismatch) status.textContent += ` 差し替えるには、ファイル名を「${parts.at(-1)}」に変更して選び直してください。`;
 
-    // A replacement inherits a saved sidecar. Without one, compare to
-    // metadata in the replacement HTML so a displayed classification is kept.
-    const baseline = entry && (entry.hasMetadata || !file) ? entry.metadata : fileMetadata;
+    // A sidecar can override just one field. All remaining fields follow the HTML.
+    const baseline = {...fileMetadata};
+    if (entry) {
+      for (const key of file ? entry.fields : Object.keys(entry.metadata)) baseline[key] = entry.metadata[key];
+    }
     const metadata = formMetadata();
     const changed = JSON.stringify(metadata) !== JSON.stringify(baseline);
     const metadataOnly = Boolean(entry && !file && changed);
     const basicUpload = !entry && !file && !changed;
     const instruction = byId('upload-instruction');
-    const valid = [...metadata.category].length <= 100 && metadata.tags.length <= 20 && metadata.tags.every(tag => [...tag].length <= 60);
+    const valid = [...metadata.title].length <= 300 && [...metadata.category].length <= 100 && metadata.tags.length <= 20 && metadata.tags.every(tag => [...tag].length <= 60);
     const canSave = valid && !mismatch && (file ? fileReady : metadataOnly || basicUpload);
     let issueUrl;
     if (valid && metadataOnly) {
       const request = {article: parts.join('/'), previous: entry.previous, ...metadata};
       issueUrl = new URL(repo + '/issues/new');
-      issueUrl.searchParams.set('title', '[書斎] 分類・タグを保存');
+      issueUrl.searchParams.set('title', '[書斎] 文献情報を保存');
       issueUrl.searchParams.set('body', JSON.stringify(request, null, 2));
     }
     // Long Japanese URLs can exceed GitHub's request limit. The file upload
@@ -109,44 +132,53 @@
     instruction.textContent = '';
     fileInstruction.textContent = '';
     if (!valid) {
-      instruction.textContent = '分類は100文字以内、タグは1件60文字以内で20件まで入力できます。';
+      instruction.textContent = 'タイトルは300文字以内、分類は100文字以内、タグは1件60文字以内で20件まで入力できます。';
       return;
     }
     if (!canSave) {
-      instruction.textContent = file ? status.textContent : entry ? '分類・タグを編集するか、差し替えるHTMLを選んでください。' : '公開するHTMLを選んでください。分類とタグは任意です。';
+      instruction.textContent = file ? status.textContent : entry ? '文献タイトル・分類・タグを編集するか、差し替えるHTMLを選んでください。' : '公開するHTMLを選んでください。タイトル・分類・タグの指定は任意です。';
       return;
     }
     const bundleNote = ' 別添え画像は、HTMLとのフォルダ構成を保って一緒に追加してください。';
     if (changed) {
       const name = metadataFilename();
       const files = file ? `「${file.name}」と「${name}」` : `「${name}」`;
-      if (useIssue) instruction.textContent = 'この文献の分類・タグを更新します。本文と公開URLはそのままです。';
-      fileInstruction.textContent = `分類ファイルをダウンロードし、GitHubのアップロード画面で${files}を選んでください。` + (file ? bundleNote : '');
+      if (useIssue) instruction.textContent = '文献情報の変更を保存します。GitHubの次の画面で Create を押してください。';
+      fileInstruction.textContent = `文献情報ファイルをダウンロードし、GitHubのアップロード画面で${files}を選んでください。` + (file ? bundleNote : '');
     } else if (file) {
       fileInstruction.textContent = `GitHubのアップロード画面で「${file.name}」を選びます。` + bundleNote;
     } else {
-      fileInstruction.textContent = '公開するHTMLをGitHubにアップロードしてください。分類やタグを一緒に登録するときは、先にこの画面でHTMLを選んで入力します。';
+      fileInstruction.textContent = '公開するHTMLをGitHubにアップロードしてください。文献タイトルや分類・タグを指定するときは、先にこの画面でHTMLを選んで入力します。';
     }
   }
   target.addEventListener('change', () => {
     const metadata = entries.get(target.value)?.metadata || newMetadata();
     category.value = metadata.category;
     tags.value = metadata.tags.join('、');
-    touched = {category: false, tags: false};
+    touched = {title: false, category: false, tags: false};
     input.value = '';
     resetFile();
     showDestination();
   });
-  for (const field of [category, tags]) {
+  for (const [key, field] of Object.entries({title: articleTitle, category, tags})) {
     field.addEventListener('input', () => {
-      touched[field.id] = true;
+      touched[key] = true;
       byId('save-status').textContent = '';
       showDestination();
     });
   }
   download.addEventListener('click', () => {
     const name = metadataFilename();
-    const blob = new Blob([JSON.stringify(formMetadata(), null, 2) + '\n'], {type: 'application/json'});
+    const metadata = formMetadata();
+    const entry = entries.get(target.value);
+    const base = input.files[0] ? fileMetadata : entry.metadata;
+    const sidecar = metadata.title ? {title: metadata.title} : {};
+    for (const key of ['category', 'tags']) {
+      if (entry?.fields.includes(key) || JSON.stringify(metadata[key]) !== JSON.stringify(base[key])) {
+        sidecar[key] = metadata[key];
+      }
+    }
+    const blob = new Blob([JSON.stringify(sidecar, null, 2) + '\n'], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -178,6 +210,8 @@
     fileStatus = '';
     fileReady = false;
     fileMetadata = newMetadata();
+    fileSourceTitle = '';
+    showTitle();
     byId('save-status').textContent = '';
   }
 
@@ -238,6 +272,7 @@
       if (!meta.has(key)) meta.set(key, node.getAttribute('content') || '');
     }
     fileMetadata = {
+      title: '',
       category: (meta.get('study-category') || '').trim(),
       tags: splitTags(meta.get('study-tags') || meta.get('keywords') || '')
     };
@@ -245,7 +280,12 @@
       if (!touched.category) category.value = fileMetadata.category;
       if (!touched.tags) tags.value = fileMetadata.tags.join('、');
     }
-    const name = (fragment.querySelector('title')?.textContent || fragment.querySelector('h1')?.textContent || '').trim();
+    const htmlTitle = node => (node?.textContent || '').trim().replace(/\s+/g, ' ');
+    const name = htmlTitle(fragment.querySelector('title')) || htmlTitle(fragment.querySelector('h1'));
+    const filename = input.files[0]?.name.replace(/\.html?$/i, '') || '';
+    const directory = entries.get(target.value)?.parts.at(-2) || 'articles';
+    fileSourceTitle = name || (/^index$/i.test(filename) ? directory : filename);
+    showTitle();
     fragment.querySelectorAll('script,meta,link,base,iframe,frame,object,embed,form,template,noscript,foreignObject,animate,animateTransform,set').forEach(node => node.remove());
     for (const node of fragment.querySelectorAll('*')) {
       for (const {name: attr, value} of [...node.attributes]) {

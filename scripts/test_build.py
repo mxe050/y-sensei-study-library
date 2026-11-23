@@ -25,6 +25,35 @@ class PublicationTests(unittest.TestCase):
         path.write_bytes(data if isinstance(data, bytes) else data.encode())
         return path
 
+    def test_site_rename_updates_pages_and_reader_while_preserving_article(self):
+        name = 'articles/2026/index.html'
+        original = '<title>原文のタイトル</title><h1>Y先生文献の書斎</h1>'
+        article = self.add(name, original)
+        build(self.root, self.out / 'original')
+        default = (self.out / 'original/index.html').read_text()
+        self.assertIn('<span>Y先生</span><strong>文献の書斎</strong>', default)
+
+        self.add('site-settings.json', json.dumps({'title': '  臨床 & 統計  <文献>  '}))
+        build(self.root, self.out / 'updated')
+        index = (self.out / 'updated/index.html').read_text()
+        manage = (self.out / 'updated/manage.html').read_text()
+        reader = (self.out / 'updated' / name).read_text()
+        safe = '臨床 &amp; 統計 &lt;文献&gt;'
+        for phrase in (f'<title>{safe}</title>', f'</span>{safe}</a>',
+                       f'<strong>{safe}</strong>', f'<span>{safe}</span>'):
+            self.assertIn(phrase, index)
+        self.assertIn('Y先生が批判的吟味をした論文集です。', index)
+        self.assertIn(f'｜{safe}</title>', manage)
+        self.assertIn(f'{safe}</a>', manage)
+        self.assertIn(f'← {safe}へ</a>', reader)
+        self.assertIn('<title>原文のタイトル</title>', reader)
+        self.assertIn('<h1>Y先生文献の書斎</h1>', reader)
+        self.assertEqual(article.read_text(), original)
+        self.assertEqual(json.loads((self.out / 'updated/site-settings.json').read_text()),
+                         {'title': '臨床 & 統計 <文献>'})
+        self.assertNotEqual((self.out / 'original/catalog-version.json').read_text(),
+                            (self.out / 'updated/catalog-version.json').read_text())
+
     def test_empty_shelf_omits_unpublished_files(self):
         self.add('notes.json', 'private-only fixture')
         self.add('articles/.gitkeep', b'')
@@ -70,9 +99,11 @@ class PublicationTests(unittest.TestCase):
         first = read_at('first')
         self.assertEqual(first['tags'], ['A', 'B'])
         self.assertFalse(first['hasMetadata'])
+        self.assertEqual(first['metadataFields'], [])
         self.add(name + '.meta.json', '{"category":"  口腔外科 ","tags":["RCT"," A & B ","RCT"]}')
         edited = read_at('edited')
         self.assertTrue(edited['hasMetadata'])
+        self.assertEqual(edited['metadataFields'], ['category', 'tags'])
         self.assertEqual((edited['category'], edited['tags']), ('口腔外科', ['RCT', 'A & B']))
         self.assertEqual(edited['path'], first['path'])
         self.assertNotEqual((self.out / 'first/catalog-version.json').read_text(),
@@ -115,6 +146,47 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(second[0]['path'], entries[0]['path'])
         self.assertEqual(second[0]['id'], entries[0]['id'])
         self.assertEqual(second[0]['title'], '第2版')
+
+    def test_renaming_and_restoring_a_title_keeps_the_article_and_its_url(self):
+        name = 'articles/日本語 の原本.html'
+        body = '<h1>誌面の見出し</h1><img src="data:image/png;base64,AAAA">'
+        source = ('<!doctype html>\r\n<html><head><TiTle\n lang="en">Original &amp; Title</TiTle>'
+                  '</head><body>' + body + '</body></html>')
+        article = self.add(name, source)
+        self.add(name + '.meta.json', json.dumps({'title': '  保存版 <図> & A  ', 'tags': ['T']}))
+        edited = build(self.root, self.out / 'renamed')[0]
+        self.assertEqual(edited['metadataFields'], ['title', 'tags'])
+        self.assertEqual((edited['title'], edited['titleOverride'], edited['sourceTitle']),
+                         ('保存版 <図> & A', '保存版 <図> & A', 'Original & Title'))
+        served = (self.out / 'renamed' / name).read_bytes().decode()
+        self.assertIn('<TiTle\n lang="en">保存版 &lt;図&gt; &amp; A</TiTle>', served)
+        self.assertIn(body, served)
+        self.assertIn('<h3>保存版 &lt;図&gt; &amp; A</h3>', (self.out / 'renamed/index.html').read_text())
+        self.add(name + '.meta.json', '{"title":"","tags":["T"]}')
+        restored = build(self.root, self.out / 'restored')[0]
+        self.assertEqual((restored['id'], restored['path'], restored['tags']), (edited['id'], edited['path'], ['T']))
+        self.assertEqual((restored['title'], restored['titleOverride']), ('Original & Title', ''))
+        self.assertEqual(article.read_bytes(), source.encode())
+
+    def test_article_without_a_document_title_gets_a_tab_title_and_keeps_figure_titles(self):
+        name = 'articles/figure.htm'
+        body = '<svg><title>図の説明</title></svg><h1>研究結果</h1>'
+        self.add(name, body)
+        self.add(name + '.meta.json', '{"title":"掲載名"}')
+        entry = build(self.root, self.out)[0]
+        self.assertEqual((entry['title'], entry['sourceTitle']), ('掲載名', '研究結果'))
+        served = (self.out / name).read_text()
+        self.assertIn('<title>掲載名</title>', served)
+        self.assertIn(body, served)
+
+    def test_invalid_article_title_stops_the_build(self):
+        name = 'articles/article.html'
+        self.add(name, '<h1>研究</h1>')
+        for i, title in enumerate([None, 10, '本' * 301, 'ab\0cd']):
+            with self.subTest(title_type=type(title)):
+                self.add(name + '.meta.json', json.dumps({'title': title}))
+                with self.assertRaisesRegex(ValueError, '文献タイトル'):
+                    build(self.root, self.out / str(i))
 
     def test_authored_viewport_is_retained_and_absolute_project_image_resolves(self):
         supplied = '<meta name="viewport" content="width=device-width, initial-scale=0.9">'

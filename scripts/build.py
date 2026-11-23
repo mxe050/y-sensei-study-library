@@ -12,10 +12,12 @@ import shutil
 import subprocess
 from urllib.parse import quote, unquote, urljoin, urlsplit
 
+from site_settings import DEFAULT_TITLE, read_site_title
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE_FILES = ('index.html', 'manage.html', 'assets/style.css', 'assets/catalog.js',
-              'assets/manage.css', 'assets/manage.js')
+              'assets/manage.css', 'assets/manage.js', 'assets/site-title.js')
 DOCUMENT_EXTENSIONS = {'.html', '.htm'}
 # Resolve URLs against a project subdirectory, as on GitHub project Pages.
 PAGES_ORIGIN = 'https://mxe050.github.io'
@@ -31,6 +33,8 @@ class ArticleParser(HTMLParser):
         self.parts = {'title': [], 'h1': []}
         self.capture = ''
         self.finished = set()
+        self.text_exclusions = []
+        self.title_start = self.title_end = None
         self.base = None
         self.images = []
         self.open_positions = {}
@@ -48,8 +52,13 @@ class ArticleParser(HTMLParser):
         if tag in {'head', 'html', 'body'} and tag not in self.open_positions:
             row, column = self.getpos()
             self.open_positions[tag] = (row, column + len(self.get_starttag_text()))
-        if tag in self.parts and tag not in self.finished:
+        if tag in {'svg', 'math', 'template', 'noscript'}:
+            self.text_exclusions.append(tag)
+        if tag in self.parts and tag not in self.finished and not self.text_exclusions:
             self.capture = tag
+            if tag == 'title':
+                row, column = self.getpos()
+                self.title_start = (row, column + len(self.get_starttag_text()))
         elif tag == 'meta':
             name = (values.get('name') or values.get('property') or '').casefold()
             self.meta.setdefault(name, values.get('content') or '')
@@ -68,22 +77,36 @@ class ArticleParser(HTMLParser):
     def handle_data(self, data):
         if self.first_content is None and not self.head_containers and data.lstrip('\ufeff').strip():
             self.first_content = self.getpos()
-        if self.capture:
+        if self.capture and not self.text_exclusions:
             self.parts[self.capture].append(data)
 
     def handle_endtag(self, tag):
         if self.head_containers and tag == self.head_containers[-1]:
             self.head_containers.pop()
-        if tag == self.capture:
+        if tag == self.capture and not self.text_exclusions:
+            if tag == 'title':
+                self.title_end = self.getpos()
             self.finished.add(tag)
             self.capture = ''
+        if self.text_exclusions and self.text_exclusions[-1] == tag:
+            self.text_exclusions.pop()
 
 
 def display_text(value):
     return ' '.join(value.split())
 
 
+def article_title_override(value):
+    if not isinstance(value, str):
+        raise ValueError('文献タイトルには文字列を指定してください。')
+    title = display_text(value)
+    if len(title) > 300 or re.search(r'[\x00-\x1f\x7f-\x9f\ud800-\udfff]', title):
+        raise ValueError('文献タイトルは300文字以内の表示できる文字で入力してください。')
+    return title
+
+
 def classification(article, meta):
+    metadata = {}
     category = meta.get('study-category', '')
     tags = re.split(r'[,，、;；\r\n]', meta.get('study-tags', meta.get('keywords', '')))
     sidecar = article.with_name(article.name + '.meta.json')
@@ -92,15 +115,17 @@ def classification(article, meta):
         try:
             metadata = json.loads(sidecar.read_text(encoding='utf-8-sig'))
         except (ValueError, UnicodeError) as error:
-            raise ValueError(f'{sidecar.name}: 分類・タグのJSONを読み込めません。{error}') from error
+            raise ValueError(f'{sidecar.name}: 文献情報のJSONを読み込めません。{error}') from error
         if not isinstance(metadata, dict):
-            raise ValueError(f'{sidecar.name}: 分類・タグにはJSONオブジェクトを指定してください。')
+            raise ValueError(f'{sidecar.name}: 文献情報にはJSONオブジェクトを指定してください。')
         category = metadata.get('category', category)
         tags = metadata.get('tags', tags)
         if not isinstance(category, str) or not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
             raise ValueError(f'{sidecar.name}: category は文字列、tags は文字列の配列で指定してください。')
     cleaned_tags = dict.fromkeys(display_text(tag) for tag in tags if tag.strip())
-    return {'category': display_text(category) or '未分類', 'tags': list(cleaned_tags), 'hasMetadata': has_metadata}
+    return {'category': display_text(category) or '未分類', 'tags': list(cleaned_tags),
+            'titleOverride': article_title_override(metadata.get('title', '')), 'hasMetadata': has_metadata,
+            'metadataFields': [field for field in ('title', 'category', 'tags') if field in metadata]}
 
 
 def is_entry(relative):
@@ -141,7 +166,7 @@ def edit_link(article_id):
     return 'manage.html?article=' + quote(article_id, safe='')
 
 
-def reader_html(source, parser, relative):
+def reader_html(source, parser, relative, site_title, *, title_override=''):
     # A document with a <base> can redirect even root-relative links. Use the
     # canonical project URL in that case so the link really leads to the shelf.
     if parser.base:
@@ -151,23 +176,23 @@ def reader_html(source, parser, relative):
         root = '../' * (len(relative.parts) - 1)
         home = root + 'index.html#catalog'
     edit = root + edit_link(relative.as_posix())
-    nav = ('<nav data-study-reader-nav aria-label="文献の書斎" lang="ja">'
-           f'<a data-study-home href="{home}" target="_self">← Y先生文献の書斎へ</a>'
-           f'<a data-study-edit href="{edit}" target="_self">分類・タグを編集</a></nav>')
+    name = escape(site_title)
+    nav = (f'<nav data-study-reader-nav aria-label="{name}" lang="ja">'
+           f'<a data-study-home href="{home}" target="_self">← {name}へ</a>'
+           f'<a data-study-edit href="{edit}" target="_self">タイトル・分類・タグを編集</a></nav>')
     added_head = ('<style data-study-fit>@media(max-width:760px){'
                   ':where(img,svg){max-width:100%}:where(img){height:auto}}'
                   'nav[data-study-reader-nav]{position:static;display:flex;flex-wrap:wrap;align-items:center;'
                   'gap:6px;padding:6px 10px;background:#faf8f2;color:#244d43}'
                   'nav[data-study-reader-nav] a{box-sizing:border-box;display:inline-flex;align-items:center;'
-                  'min-height:44px;padding:6px 12px;background:#f2f4ed;color:#244d43;border:1px solid #9dad9f;'
+                  'min-height:44px;max-width:100%;overflow-wrap:anywhere;padding:6px 12px;background:#f2f4ed;color:#244d43;border:1px solid #9dad9f;'
                   'border-radius:4px;font:600 14px/1.5 system-ui;text-decoration:underline}'
                   '@media print{nav[data-study-reader-nav]{display:none}}</style>')
     if 'viewport' not in parser.meta:
         added_head = ('<meta data-study-viewport name="viewport" '
                       'content="width=device-width, initial-scale=1">') + added_head
 
-    # Keep every original character, including CRLF and long embedded images.
-    # Insert from the end so that one insertion cannot shift the other.
+    # Work against the original offsets to preserve all authored body markup and image bytes.
     line_offsets = [0] + [m.end() for m in re.finditer('\\n', source)]
     def offset(position, fallback):
         if position is None:
@@ -179,25 +204,35 @@ def reader_html(source, parser, relative):
     head_position = positions.get('head') or positions.get('html') or parser.doctype_end
     head_at = offset(head_position, int(source.startswith('\ufeff')))
     body_at = max(head_at, offset(positions.get('body') or parser.first_content, len(source)))
-    for at, text in sorted([(body_at, nav), (head_at, added_head)], key=lambda pair: pair[0], reverse=True):
-        source = source[:at] + text + source[at:]
+    edits = [(body_at, body_at, nav)]
+    if title_override:
+        title_text = escape(title_override, quote=False)
+        if parser.title_end is None:
+            added_head = '<title>' + title_text + '</title>' + added_head
+        else:
+            edits.append((offset(parser.title_start, head_at), offset(parser.title_end, head_at), title_text))
+    edits.append((head_at, head_at, added_head))
+    for start, end, text in sorted(edits, key=lambda edit: edit[0], reverse=True):
+        source = source[:start] + text + source[end:]
     return source
 
 
-def publish_article(root, article, present, destination):
+def publish_article(root, article, present, destination, site_title):
     relative = article.relative_to(root)
     parser = ArticleParser()
     source = article.read_bytes().decode('utf-8')
     parser.feed(source)
     parser.close()
     validate_images(parser, relative, present)
-    destination.write_bytes(reader_html(source, parser, relative).encode('utf-8'))
     filename_title = article.parent.name if article.stem.lower() == 'index' else article.stem
-    title = display_text(''.join(parser.parts['title'])) or display_text(''.join(parser.parts['h1'])) or filename_title
+    source_title = display_text(''.join(parser.parts['title'])) or display_text(''.join(parser.parts['h1'])) or filename_title
+    metadata = classification(article, parser.meta)
+    rendered = reader_html(source, parser, relative, site_title, title_override=metadata['titleOverride'])
+    destination.write_bytes(rendered.encode('utf-8'))
     summary = display_text(parser.meta.get('description') or parser.meta.get('og:description', ''))
     return {
-        'id': relative.as_posix(), 'path': quote(relative.as_posix()), 'title': title,
-        **classification(article, parser.meta),
+        'id': relative.as_posix(), 'path': quote(relative.as_posix()), 'title': metadata['titleOverride'] or source_title,
+        'sourceTitle': source_title, **metadata,
         'summary': summary, 'updated': update_date(root, article),
     }
 
@@ -215,16 +250,19 @@ def article_row(entry):
             f'<time datetime="{entry["updated"]}">{date_text}</time></div>'
             f'<h3>{escape(entry["title"])}</h3>{summary}{tags}</a>'
             f'<a class="article-edit" href="{edit_link(entry["id"])}" '
-            f'aria-label="分類・タグを編集（{escape(entry["title"])}）">分類・タグを編集</a></li>')
+            f'aria-label="タイトル・分類・タグを編集（{escape(entry["title"])}）">タイトル・分類・タグを編集</a></li>')
 
 
-def write_catalog(root, output, entries):
+def write_catalog(root, output, entries, site_title):
     data = json.dumps(entries, ensure_ascii=False, separators=(',', ':'))
     data = data.replace('<', r'\u003c').replace('\u2028', r'\u2028').replace('\u2029', r'\u2029')
     # Keep already-cached pages from the first edition working.
     (output / 'assets/catalog-data.js').write_text('window.STUDY_CATALOG = ' + data + ';\n', encoding='utf-8')
     marker = '<script type="application/json" id="catalog-data">[]</script>'
-    common = {marker: marker.replace('>[]<', '>' + data + '<')}
+    name = escape(site_title)
+    common = {marker: marker.replace('>[]<', '>' + data + '<'), '{{SITE_TITLE}}': name}
+    cover_title = ('<span>Y先生</span><strong>文献の書斎</strong>' if site_title == DEFAULT_TITLE
+                   else f'<strong>{name}</strong>')
     # Version the script and stylesheet URLs when their contents change.
     # Catalog records are embedded in the document itself.
     versions = {}
@@ -239,12 +277,13 @@ def write_catalog(root, output, entries):
         replacements = common.copy()
         if page == 'index.html':
             replacements.update({
+                '<!--site-cover-title-->': cover_title,
                 '<!--catalog-count-->': f'{len(entries)}件',
                 '<!--catalog-rows-->': '\n'.join(article_row(entry) for entry in entries),
                 'data-empty-state hidden': 'data-empty-state hidden' if entries else 'data-empty-state',
             })
         for token in replacements:
-            if template.count(token) != 1:
+            if token not in template or (token != '{{SITE_TITLE}}' and template.count(token) != 1):
                 raise ValueError(f'{page}: 目録のテンプレートに必要な項目を確認してください。{token}')
         pattern = re.compile('|'.join(map(re.escape, replacements)))
         rendered = pattern.sub(lambda match: replacements[match[0]], template)
@@ -261,6 +300,7 @@ def write_catalog(root, output, entries):
 def build(root, output):
     if output.exists() and any(output.iterdir()):
         raise ValueError(f'出力先には空のフォルダを指定してください。{output}')
+    site_title = read_site_title(root)
     article_dir = root / 'articles'
     sources = []
     for path in sorted(article_dir.rglob('*')):
@@ -278,12 +318,14 @@ def build(root, output):
         dest = output / path.relative_to(root)
         dest.parent.mkdir(parents=True, exist_ok=True)
         if path.is_relative_to(article_dir) and is_entry(path.relative_to(article_dir)):
-            entries.append(publish_article(root, path, public_files, dest))
+            entries.append(publish_article(root, path, public_files, dest, site_title))
         else:
             shutil.copyfile(path, dest)
     entries.sort(key=lambda entry: (entry['title'], entry['id']))
     entries.sort(key=lambda entry: entry['updated'], reverse=True)
-    write_catalog(root, output, entries)
+    write_catalog(root, output, entries, site_title)
+    (output / 'site-settings.json').write_text(
+        json.dumps({'title': site_title}, ensure_ascii=False) + '\n', encoding='utf-8')
     (output / '.nojekyll').touch()
     return entries
 

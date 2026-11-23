@@ -6,7 +6,7 @@
   <meta name="catalog-version" content="<!--catalog-version-->">
   <meta name="theme-color" content="#163b36">
   <meta name="description" content="Y先生が批判的吟味をした論文集です。公開された文献を分類・タグ・キーワードで探せます。">
-  <title>Y先生文献の書斎</title>
+  <title>{{SITE_TITLE}}</title>
   <link rel="stylesheet" href="./assets/style.css">
   <script type="application/json" id="catalog-data">[]</script>
   <script src="./assets/catalog.js" defer></script>
@@ -14,12 +14,12 @@
 <body id="top">
   <a class="skip-link" href="#catalog">文献一覧へスキップ</a>
   <header class="masthead"><div class="masthead-inner page-width">
-    <a class="brand" href="./index.html"><span class="book-symbol" aria-hidden="true"></span>Y先生文献の書斎</a>
+    <a class="brand" href="./index.html"><span class="book-symbol" aria-hidden="true"></span>{{SITE_TITLE}}</a>
     <nav aria-label="書斎のメニュー"><a href="#catalog">文献一覧</a><a class="manage-entry" href="./manage.html">掲載・編集</a></nav>
   </div></header>
   <main class="page-width">
     <section class="cover" aria-labelledby="cover-title">
-      <div class="cover-title"><h1 id="cover-title"><span>Y先生</span><strong>文献の書斎</strong></h1></div>
+      <div class="cover-title"><h1 id="cover-title"><!--site-cover-title--></h1></div>
       <div class="intro">
         <p><strong>Y先生、最近はAIに頼っていますので、絶対に原文を確認してください。Y先生を批判的吟味してね。</strong></p>
         <p>Y先生が批判的吟味をした論文集です。個人的に行っている非公開版より吟味が甘くなっているかもしれません。クローズドの論文は内容が極めて限定的にしか紹介できないし、オープンの論文でも図などの引用は2－3点以内にしています。</p>
@@ -39,6 +39,6 @@
       <div class="empty" id="empty" data-empty-state hidden><span class="empty-book" aria-hidden="true"><span class="book-symbol"></span></span><h3 id="empty-title">公開された文献はまだありません</h3><p id="empty-text">文献を掲載するとここに表示されます。</p><button type="button" id="reset" hidden>検索条件をクリア</button></div>
     </section>
   </main>
-  <footer><div class="page-width footer-inner"><span>Y先生文献の書斎</span><nav aria-label="関連メニュー"><a href="./manage.html">掲載者メニュー</a><a href="#top">ページの先頭へ ↑</a></nav></div></footer>
+  <footer><div class="page-width footer-inner"><span>{{SITE_TITLE}}</span><nav aria-label="関連メニュー"><a href="./manage.html">掲載者メニュー</a><a href="#top">ページの先頭へ ↑</a></nav></div></footer>
 </body>
 </html>
