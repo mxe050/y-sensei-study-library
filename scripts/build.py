@@ -22,6 +22,69 @@ DOCUMENT_EXTENSIONS = {'.html', '.htm'}
 # Resolve URLs against a project subdirectory, as on GitHub project Pages.
 PAGES_ORIGIN = 'https://mxe050.github.io'
 PROJECT_BASE = '/y-sensei-study-library/'
+PUBLICATION_ORIGIN = 'https://y-sensei-study-library.mxe05064.chatgpt.site'
+MANAGEMENT_URL = 'https://private-study-library.mxe05064.chatgpt.site/public-manage'
+
+
+def read_publication(root):
+    """Opt in to the known migration without changing the preserved source files."""
+    settings = root / 'publication.json'
+    if not settings.is_file():
+        return None
+    config = json.loads(settings.read_text(encoding='utf-8'))
+    expected = {'mode': 'redirect', 'publicOrigin': PUBLICATION_ORIGIN,
+                'managementUrl': MANAGEMENT_URL}
+    if config != expected:
+        raise ValueError('publication.json: 移行先の固定設定を確認してください。')
+    return config
+
+
+def migration_page(target, title, *, management=False, articles=()):
+    """Keep a usable link with JS disabled; never take a redirect URL from input."""
+    config = json.dumps({'target': target, 'management': management,
+                         'articles': list(articles)}, ensure_ascii=False)
+    config = config.replace('<', r'\u003c').replace('\u2028', r'\u2028').replace('\u2029', r'\u2029')
+    label = '掲載・編集画面を開く' if management else '文献の書斎を開く'
+    explanation = ('掲載・編集は、いつもの本人専用書斎から行えます。' if management
+                   else '文献の書斎を新しい公開先で開きます。')
+    return f'''<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(title)}｜移転のお知らせ</title>
+<meta name="robots" content="noindex, follow"><link rel="canonical" href="{escape(target, quote=True)}">
+<style>body{{margin:0;background:#f8fafb;color:#183139;font:16px/1.9 system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif}}main{{max-width:42rem;margin:12vh auto;padding:2rem;background:#fff;border:1px solid #dbe5e4;border-radius:.6rem}}h1{{font-size:1.5rem;line-height:1.6}}a{{color:#21675f;text-underline-offset:.2em;overflow-wrap:anywhere}}.open{{display:inline-block;padding:.65rem 1rem;border:1px solid #21675f;border-radius:.3rem;font-weight:700}}@media(max-width:600px){{main{{margin:2rem 1rem;padding:1.5rem}}}}</style>
+</head><body><main><h1>{escape(title)}</h1><p>{explanation}</p><p>自動で移動しない場合は、次のリンクを開いてください。</p><p><a class="open" id="destination" href="{escape(target, quote=True)}">{label}</a></p></main>
+<script>
+(() => {{
+  'use strict';
+  const config = {config};
+  const target = new URL(config.target);
+  if (config.management) {{
+    const article = new URLSearchParams(location.search).get('article');
+    if (article && config.articles.includes(article)) target.searchParams.set('article', article);
+  }} else {{
+    target.search = location.search;
+  }}
+  target.hash = location.hash;
+  document.getElementById('destination').href = target.href;
+  location.replace(target.href);
+}})();
+</script></body></html>
+'''
+
+
+def write_publication_redirects(output, entries, site_title, config):
+    origin = config['publicOrigin']
+    index = migration_page(origin + '/', site_title)
+    (output / 'index.html').write_text(index, encoding='utf-8')
+    (output / 'manage.html').write_text(
+        migration_page(config['managementUrl'], site_title + '｜掲載・編集', management=True,
+                       articles=(entry['id'] for entry in entries)), encoding='utf-8')
+    for entry in entries:
+        target = origin + '/' + quote(entry['id'], safe='/')
+        (output / entry['id']).write_text(migration_page(target, entry['title']), encoding='utf-8')
+    # Previously cached catalog screens can detect the changed entry point.
+    (output / 'catalog-version.json').write_text(
+        json.dumps({'version': hashlib.sha256(index.encode('utf-8')).hexdigest()[:20]}), encoding='utf-8')
 
 
 class ArticleParser(HTMLParser):
@@ -300,6 +363,7 @@ def write_catalog(root, output, entries, site_title):
 def build(root, output):
     if output.exists() and any(output.iterdir()):
         raise ValueError(f'出力先には空のフォルダを指定してください。{output}')
+    publication = read_publication(root)
     site_title = read_site_title(root)
     article_dir = root / 'articles'
     sources = []
@@ -326,6 +390,8 @@ def build(root, output):
     write_catalog(root, output, entries, site_title)
     (output / 'site-settings.json').write_text(
         json.dumps({'title': site_title}, ensure_ascii=False) + '\n', encoding='utf-8')
+    if publication:
+        write_publication_redirects(output, entries, site_title, publication)
     (output / '.nojekyll').touch()
     return entries
 
